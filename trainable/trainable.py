@@ -2,6 +2,7 @@
 
 import pytorch_lightning as lightning
 from pytorch_lightning.profiler import Profiler
+from pytorch_lightning.loggers import TensorBoardLogger
 
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -71,12 +72,7 @@ class Trainable(lightning.LightningModule):
             case optimizer:
                 raise NotImplementedError(f"Unsupported Optimizer: {optimizer}")
 
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=100, T_mult=2, eta_min=1e-6)
-
-        return dict(
-            optimizer=optimizer,
-            lr_scheduler=lr_scheduler,
-        )
+        return optimizer
 
     def configure_callbacks(self):
         """
@@ -127,8 +123,18 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the Trainer used to train this module
         """
+        if save_dir is None:
+            logger = True
+        else:
+            save_path = Path(save_dir)
+            version = save_path.name
+            experiment_name = save_path.parent.name
+            save_dir = save_path.parent.parent
+            logger = TensorBoardLogger(save_dir=save_dir, name=experiment_name, version=version)
+
         return lightning.Trainer(
             accelerator=self.hparams.accelerator.lower(),
+            logger=logger,
             devices=self.hparams.devices,
             max_epochs=self.hparams.max_epochs,
             gradient_clip_val=self.hparams.gradient_clip,
