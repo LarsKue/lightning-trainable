@@ -23,8 +23,6 @@ class TrainableHParams(HParams):
     accumulate_batches: int | None = None
     track_grad_norm: int | None = 2
     gradient_clip: float | int | None = None
-    num_workers: int = 4
-    benchmark: bool = True
     profiler: str | Profiler | None = None
 
 
@@ -92,7 +90,7 @@ class Trainable(lightning.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=True,
             pin_memory=True,
-            num_workers=self.hparams.num_workers,
+            num_workers=4,
         )
 
     def val_dataloader(self):
@@ -104,7 +102,7 @@ class Trainable(lightning.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=False,
             pin_memory=True,
-            num_workers=self.hparams.num_workers,
+            num_workers=4,
         )
 
     def test_dataloader(self):
@@ -116,7 +114,7 @@ class Trainable(lightning.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=False,
             pin_memory=True,
-            num_workers=self.hparams.num_workers,
+            num_workers=4,
         )
 
     def configure_trainer(self, save_dir: str | Path = None, **trainer_kwargs):
@@ -141,7 +139,7 @@ class Trainable(lightning.LightningModule):
             accumulate_grad_batches=self.hparams.accumulate_batches,
             track_grad_norm=self.hparams.track_grad_norm,
             profiler=self.hparams.profiler,
-            benchmark=self.hparams.benchmark,
+            benchmark=True,
             **trainer_kwargs,
         )
 
@@ -149,3 +147,5 @@ class Trainable(lightning.LightningModule):
     def fit(self, **trainer_kwargs):
         trainer = self.configure_trainer(**trainer_kwargs)
         trainer.fit(self)
+
+        return trainer.validate(self)[0]["validation_loss"]
