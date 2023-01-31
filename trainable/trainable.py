@@ -58,7 +58,7 @@ class Trainable(lightning.LightningModule):
 
     def configure_optimizers(self):
         """
-        Configure optimizers and LR schedulers for Lightning
+        Configure optimizers for Lightning
         """
         lr = self.hparams.learning_rate
         weight_decay = self.hparams.weight_decay
