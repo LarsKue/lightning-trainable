@@ -16,7 +16,7 @@ def test_missing():
     class Missing(HParams):
         a: int
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         m = Missing()
 
 
@@ -24,7 +24,7 @@ def test_extra():
     class Extra(HParams):
         a: int = 1
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         e = Extra(b=2.0)
 
 
@@ -41,5 +41,5 @@ def test_required():
         required: int
         optional: float = 1.0
 
-    assert Required.required_keys() == {"required"}
-    assert Required.optional_keys() == {"optional"}
+    assert Required.required_parameters() == {"required": int}
+    assert Required.optional_parameters() == {"optional": float}
