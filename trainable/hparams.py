@@ -43,6 +43,7 @@ class HParams(dict):
 
             required_hparam: str
             optional_hparam: int = 0
+        hparams = NoStrictHParams(required_hparam=42)
     ```
 
     Note that this class uses the __annotations__ attribute of its subclasses to identify hparams and their types.
