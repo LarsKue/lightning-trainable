@@ -90,9 +90,10 @@ class HParams(dict):
         if not required_keys.issubset(have_keys):
             missing_keys = required_keys - have_keys
             types = [all_parameters[key] for key in missing_keys]
+            typenames = [T.__name__ if hasattr(T, "__name__") else repr(T) for T in types]
             message = "Missing the following required hparams:\n"
             message += "\n".join([
-                f"{i + 1:4d}: '{key}' of type `{T.__name__}`" for i, (key, T) in enumerate(zip(missing_keys, types))
+                f"{i + 1:4d}: '{key}' of type `{T}`" for i, (key, T) in enumerate(zip(missing_keys, typenames))
             ])
             raise ValueError(message)
 
