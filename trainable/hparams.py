@@ -113,6 +113,8 @@ class HParams(dict):
             # check types match
             for key, value in hparams.items():
                 T = all_parameters[key]
+                if T is None:
+                    T = type(None)
 
                 # noinspection PyTypeHints
                 if not isinstance(value, T):
