@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from .hparams import HParams
+
 import pytorch_lightning as lightning
 from pytorch_lightning.profiler import Profiler
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -30,8 +32,6 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 from pathlib import Path
-
-from .hparams import HParams
 
 
 class TrainableHParams(HParams):
@@ -167,6 +167,7 @@ class Trainable(lightning.LightningModule):
 
     @torch.enable_grad()
     def fit(self, **trainer_kwargs):
+        """ Fit the module to data and return the validation loss """
         trainer = self.configure_trainer(**trainer_kwargs)
         trainer.fit(self)
 
