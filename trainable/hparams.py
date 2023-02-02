@@ -21,39 +21,56 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from types import GenericAlias
+from typing import get_origin
 
 
 class HParams(dict):
-    """
-    Wrapper class to handle hparams with defaults, required and optional keys, and strict type checks
-    Usage:
-    ```
-        class MyNetworkHParams(HParams):
-            required_hparam: str
-            optional_hparam: int = 0
+    strict_types = True
 
-        hparams = MyNetworkHParams(required_hparam="required")
-    ```
-    """
     def __init__(self, **hparams):
-        hparams = self.validate_hparams(**hparams)
+        hparams = self.validate_parameters(hparams)
         super().__init__(**hparams)
 
+    def __init_subclass__(cls):
+        if not cls.strict_types:
+            return
+
+        # check that subclasses do not use generic types
+        for parameter, T in cls.parameters().items():
+            if isinstance(T, GenericAlias):
+                basic_type = get_origin(T)
+                raise NotImplementedError(f"HParams does not support type checking for generics. "
+                                          f"Use the basic type `{basic_type.__name__}` instead of `{T}` "
+                                          f"for parameter '{parameter}'.")
+
     @classmethod
-    def validate_hparams(cls, **hparams):
+    def validate_parameters(cls, hparams: dict) -> dict:
+        """
+        Check given hparams for validity, and fill missing ones with defaults.
+
+        By default, hparams are valid if and only if:
+            1. All required parameters are filled
+            2. No unknown parameters are given
+            3. All hparams match their designated type
+
+        """
+        required_parameters = cls.required_parameters()
+        all_parameters = cls.parameters()
+
         have_keys = set(hparams.keys())
-        required_keys = cls.required_keys()
-        all_keys = set(cls.__annotations__.keys())
+        required_keys = set(required_parameters.keys())
+        all_keys = set(all_parameters.keys())
 
         # check required keys are in hparams
         if not required_keys.issubset(have_keys):
             missing_keys = required_keys - have_keys
-            types = [cls.__annotations__[key] for key in missing_keys]
+            types = [all_parameters[key] for key in missing_keys]
             message = "Missing the following required hparams:\n"
             message += "\n".join([
-                f"'{key}' of type {T}" for key, T in zip(missing_keys, types)
+                f"{i + 1:4d}: '{key}' of type `{T.__name__}`" for i, (key, T) in enumerate(zip(missing_keys, types))
             ])
-            raise KeyError(message)
+            raise ValueError(message)
 
         # check no extra keys are in hparams
         if not have_keys.issubset(all_keys):
@@ -61,28 +78,57 @@ class HParams(dict):
             values = [hparams[key] for key in extra_keys]
             message = "Received the following extra hparams:"
             message += "\n".join([
-                f"'{key}' = {value}" for key, value in zip(extra_keys, values)
+                f"{i + 1:4d}: '{key}' = {value}" for i, (key, value) in enumerate(zip(extra_keys, values))
             ])
+            raise ValueError(message)
 
         # insert defaults
         hparams = cls.defaults() | hparams
 
-        # check types match
-        for key, value in hparams.items():
-            T = cls.__annotations__[key]
-            if not isinstance(value, T):
-                raise TypeError(f"Hparam '{key}' is required to be of type {T}, but got {value} of type {type(value)}.")
+        if cls.strict_types:
+            # check types match
+            for key, value in hparams.items():
+                T = all_parameters[key]
+
+                # noinspection PyTypeHints
+                if not isinstance(value, T):
+                    raise TypeError(f"Hparam '{key}' is required to be of type `{T.__name__}`, "
+                                    f"but got `{value}` of type `{type(value).__name__}`.")
 
         return hparams
 
     @classmethod
-    def required_keys(cls):
-        return {key for key in cls.__annotations__.keys() if key not in dir(cls)}
+    def parameters(cls) -> dict[str, type]:
+        """ Return names and types for all hparams """
+        if cls is HParams:
+            return dict()
+
+        types = cls.__annotations__.copy()
+
+        superclasses = cls.__mro__[1:]
+
+        for c in superclasses:
+            if issubclass(c, HParams):
+                # override superclasses with subclasses
+                types = c.parameters() | types
+
+        return types
 
     @classmethod
-    def optional_keys(cls):
-        return {key for key in cls.__annotations__.keys() if key in dir(cls)}
+    def required_parameters(cls) -> dict[str, type]:
+        """ Return names and types for all required hparams """
+        # parameters that do not have a default value are required
+        defaults = dir(cls)
+        return {key: value for key, value in cls.parameters().items() if key not in defaults}
 
     @classmethod
-    def defaults(cls):
-        return {key: getattr(cls, key) for key, value in cls.__annotations__.items() if key in dir(cls)}
+    def optional_parameters(cls) -> dict[str, type]:
+        """ Return names and types for all optional hparams """
+        required = cls.required_parameters()
+        return {key: value for key, value in cls.parameters().items() if key not in required}
+
+    @classmethod
+    def defaults(cls) -> dict[str, any]:
+        """ Return names and default values for all optional hparams """
+        optional_keys = cls.optional_parameters().keys()
+        return {key: getattr(cls, key) for key in optional_keys}
