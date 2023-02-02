@@ -26,6 +26,29 @@ from typing import get_origin
 
 
 class HParams(dict):
+    """
+    Wrapper class to handle hparams with defaults, required and optional keys, and optional strict type checks
+    Usage:
+    ```
+        class MyNetworkHParams(HParams):
+            required_hparam: str
+            optional_hparam: int = 0
+        hparams = MyNetworkHParams(required_hparam="required")
+    ```
+
+    You can turn strict type checking off with the class attribute `strict_types`:
+    ```
+        class NoStrictHParams(HParams):
+            strict_types = False
+
+            required_hparam: str
+            optional_hparam: int = 0
+    ```
+
+    Note that this class uses the __annotations__ attribute of its subclasses to identify hparams and their types.
+    This means that any class parameter that has a type hint will be treated as an hparam. If you want to add
+    class attributes that are not hparams, do not use a type hint.
+    """
     strict_types = True
 
     def __init__(self, **hparams):
