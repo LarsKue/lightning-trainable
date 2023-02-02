@@ -49,7 +49,7 @@ class TrainableHParams(HParams):
 
 
 class Trainable(lightning.LightningModule):
-    def __init__(self, train_data: Dataset = None, val_data: Dataset = None, test_data: Dataset = None, **hparams):
+    def __init__(self, hparams: TrainableHParams | dict, train_data: Dataset = None, val_data: Dataset = None, test_data: Dataset = None):
         super().__init__()
         if not isinstance(hparams, TrainableHParams):
             hparams = TrainableHParams(**hparams)
