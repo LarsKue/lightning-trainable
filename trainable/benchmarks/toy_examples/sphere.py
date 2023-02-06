@@ -1,5 +1,5 @@
-from .benchmark import GenerativeBenchmark
 from trainable import Trainable
+from trainable.benchmarks import GenerativeBenchmark
 
 import torch
 import torch.distributions as D
