@@ -17,7 +17,7 @@ def test_missing():
         a: int
 
     with pytest.raises(ValueError):
-        m = Missing()
+        Missing()
 
 
 def test_extra():
@@ -25,7 +25,7 @@ def test_extra():
         a: int = 1
 
     with pytest.raises(ValueError):
-        e = Extra(b=2.0)
+        Extra(b=2.0)
 
 
 def test_types():
@@ -33,7 +33,7 @@ def test_types():
         a: int
 
     with pytest.raises(TypeError):
-        w = WrongTypes(a=2.0)
+        WrongTypes(a=2.0)
 
 
 def test_required():
@@ -43,3 +43,26 @@ def test_required():
 
     assert Required.required_parameters() == {"required": int}
     assert Required.optional_parameters() == {"optional": float}
+
+
+def test_inheritance():
+    class BaseHParams(HParams):
+        required: int
+        override: int
+        override_default: int = 1
+
+    class DerivedHParams(BaseHParams):
+        optional: int = 1
+        override: float
+        override_default: int = 2
+
+    assert DerivedHParams.required_parameters() == {
+        "required": int,
+        "override": float,
+    }
+    assert DerivedHParams.defaults() == {
+        "optional": 1,
+        "override_default": 2,
+    }
+
+    d = DerivedHParams(required=1, override=1.0)

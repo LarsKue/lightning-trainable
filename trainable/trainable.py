@@ -49,7 +49,13 @@ class TrainableHParams(HParams):
 
 
 class Trainable(lightning.LightningModule):
-    def __init__(self, hparams: TrainableHParams | dict, train_data: Dataset = None, val_data: Dataset = None, test_data: Dataset = None):
+    def __init__(
+            self,
+            hparams: TrainableHParams | dict,
+            train_data: Dataset = None,
+            val_data: Dataset = None,
+            test_data: Dataset = None
+    ):
         super().__init__()
         if not isinstance(hparams, TrainableHParams):
             hparams = TrainableHParams(**hparams)
@@ -99,7 +105,12 @@ class Trainable(lightning.LightningModule):
         Configure and return train callbacks for Lightning
         """
         return [
-            lightning.callbacks.ModelCheckpoint(monitor="validation_loss", save_last=True, every_n_epochs=25, save_top_k=5),
+            lightning.callbacks.ModelCheckpoint(
+                monitor="validation_loss",
+                save_last=True,
+                every_n_epochs=25,
+                save_top_k=5
+            ),
             lightning.callbacks.LearningRateMonitor(),
         ]
 

@@ -1,6 +1,6 @@
+from trainable import Trainable, TrainableHParams
 
-from trainable import Trainable
 
-
-def test_create():
-    t = Trainable(max_epochs=10, batch_size=32)
+def test_instantiate():
+    hparams = TrainableHParams(max_epochs=10, batch_size=32)
+    Trainable(hparams)
