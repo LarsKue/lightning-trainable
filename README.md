@@ -50,13 +50,37 @@ class MyHParams(TrainableHParams):
 
 ### 3. Train your model with `model.fit()`
 ```python
-hparams = MyHParams(dict(
+hparams = MyHParams(
     layer_sizes=[32, 64, 32],
-))
+)
 
 model = MyNetwork(hparams)
 model.fit()
 ```
+
+## Benchmarks
+Benchmarks provide an easy, clean way to test the inference performance of your models.
+
+*Note:* Benchmarks are still a work-in-progress,
+and as such the process of using them may be either incomplete or at least not pretty.
+
+You can find benchmarks in `experiments/benchmarks`.
+Currently, only generative benchmarks are available.
+You can create an infinite, iterable dataset from a generative benchmark like this:
+
+```python
+from experiments.benchmarks import *
+dataset = HypershellsDataset()
+```
+
+And run your model on this benchmark with `benchmark_grid`:
+
+```python
+results_df = benchmark_grid(models=[MyNetwork], parameters=[hparams], datasets=[dataset])
+```
+
+As the name implies, `benchmark_grid` supports passing any number of model classes,
+parameter sets, or datasets. The benchmarks will be run in a meshgrid over what you pass.
 
 ## Additional Details
 For more details, check out the documentation.
