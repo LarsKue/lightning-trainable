@@ -1,7 +1,8 @@
 # lightning-trainable
 A light-weight trainable module for `pytorch-lightning`, aimed at fast prototyping.
 
-This package is intended to further simplify the definition of your `LightningModules` such that you only need to define a network, hyperparameters, and a loss function.
+This package is intended to further simplify the definition of your `LightningModules`
+such that you only need to define a network, hyperparameters, and train metrics.
 
 It also provides some default benchmarks that you can run your models on.
 
@@ -29,10 +30,14 @@ class MyNetwork(Trainable):
         self.train_data = TensorDataset(...)
         self.val_data = TensorDataset(...)
     
-    def loss(self, batch, batch_idx):
+    def compute_metrics(self, batch, batch_idx):
         x, y = batch
         yhat = self.network(x)
-        return F.mse_loss(yhat, y)
+        mse = F.mse_loss(yhat, y)
+        
+        return dict(
+            loss=mse
+        )
 ```
 
 ### 2. Define your model hparams, inheriting from `TrainableHParams`
