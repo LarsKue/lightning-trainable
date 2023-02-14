@@ -29,12 +29,15 @@ from pytorch_lightning.profiler import Profiler
 from pytorch_lightning.loggers import TensorBoardLogger
 
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, IterableDataset
 
 from pathlib import Path
 
 
 class TrainableHParams(HParams):
+    # name of the loss, your `compute_metrics` should return a dict with this name in its keys
+    loss: str = "loss"
+
     accelerator: str = "gpu"
     devices: int = 1
     max_epochs: int | None
@@ -52,6 +55,7 @@ class Trainable(lightning.LightningModule):
     def __init__(
             self,
             hparams: TrainableHParams | dict,
+            log_dir: Path | str = "lightning_logs",
             train_data: Dataset = None,
             val_data: Dataset = None,
             test_data: Dataset = None
@@ -59,30 +63,37 @@ class Trainable(lightning.LightningModule):
         super().__init__()
         if not isinstance(hparams, TrainableHParams):
             hparams = TrainableHParams(**hparams)
-
         self.save_hyperparameters(hparams)
+
+        self.log_dir = Path(log_dir)
 
         self.train_data = train_data
         self.val_data = val_data
         self.test_data = test_data
 
-    def loss(self, batch, batch_idx) -> torch.Tensor:
-        """ Compute the loss on the given batch """
+    def compute_metrics(self, batch, batch_idx) -> dict:
+        """ Compute any relevant metrics, including the loss, on the given batch """
         raise NotImplementedError
 
     def training_step(self, batch, batch_idx):
-        loss = self.loss(batch, batch_idx)
-        self.log("training_loss", loss)
+        metrics = self.compute_metrics(batch, batch_idx)
+        if self.hparams.loss not in metrics:
+            raise RuntimeError(f"You must return the loss '{self.hparams.loss}' from `compute_metrics`.")
 
-        return loss
+        for key, value in metrics.items():
+            self.log(f"training_{key}", value)
+
+        return metrics[self.hparams.loss]
 
     def validation_step(self, batch, batch_idx):
-        loss = self.loss(batch, batch_idx)
-        self.log("validation_loss", loss)
+        metrics = self.compute_metrics(batch, batch_idx)
+        for key, value in metrics.items():
+            self.log(f"validation_{key}", value)
 
     def test_step(self, batch, batch_idx):
-        loss = self.loss(batch, batch_idx)
-        self.log("test_loss", loss)
+        metrics = self.compute_metrics(batch, batch_idx)
+        for key, value in metrics.items():
+            self.log(f"test_{key}", value)
 
     def configure_optimizers(self):
         """
@@ -106,7 +117,7 @@ class Trainable(lightning.LightningModule):
         """
         return [
             lightning.callbacks.ModelCheckpoint(
-                monitor="validation_loss",
+                monitor=f"validation_{self.hparams.loss}",
                 save_last=True,
                 every_n_epochs=25,
                 save_top_k=5
@@ -121,7 +132,7 @@ class Trainable(lightning.LightningModule):
         return DataLoader(
             dataset=self.train_data,
             batch_size=self.hparams.batch_size,
-            shuffle=True,
+            shuffle=not isinstance(self.train_data, IterableDataset),
             pin_memory=True,
             num_workers=4,
         )
@@ -150,22 +161,27 @@ class Trainable(lightning.LightningModule):
             num_workers=4,
         )
 
-    def configure_trainer(self, save_dir: str | Path = None, **trainer_kwargs):
+    def configure_logger(self, **kwargs):
+        """
+        Configure and return the Logger to be used by the Lightning.Trainer
+        """
+        return TensorBoardLogger(
+            save_dir=self.log_dir,
+            **kwargs
+        )
+
+    def configure_trainer(self, logger_kwargs: dict = None, trainer_kwargs: dict = None):
         """
         Configure and return the Trainer used to train this module
         """
-        if save_dir is None:
-            logger = True
-        else:
-            save_path = Path(save_dir)
-            version = save_path.name
-            experiment_name = save_path.parent.name
-            save_dir = save_path.parent.parent
-            logger = TensorBoardLogger(save_dir=save_dir, name=experiment_name, version=version)
+        if logger_kwargs is None:
+            logger_kwargs = dict()
+        if trainer_kwargs is None:
+            trainer_kwargs = dict()
 
         return lightning.Trainer(
             accelerator=self.hparams.accelerator.lower(),
-            logger=logger,
+            logger=self.configure_logger(**logger_kwargs),
             devices=self.hparams.devices,
             max_epochs=self.hparams.max_epochs,
             gradient_clip_val=self.hparams.gradient_clip,
@@ -177,9 +193,14 @@ class Trainable(lightning.LightningModule):
         )
 
     @torch.enable_grad()
-    def fit(self, **trainer_kwargs):
-        """ Fit the module to data and return the validation loss """
-        trainer = self.configure_trainer(**trainer_kwargs)
+    def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None) -> dict:
+        """ Fit the module to data and return validation metrics """
+        if logger_kwargs is None:
+            logger_kwargs = dict()
+        if trainer_kwargs is None:
+            trainer_kwargs = dict()
+
+        trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
         trainer.fit(self)
 
-        return trainer.validate(self)[0]["validation_loss"]
+        return trainer.validate(self)[0]
