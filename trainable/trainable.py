@@ -33,6 +33,8 @@ from torch.utils.data import DataLoader, Dataset, IterableDataset
 
 from pathlib import Path
 
+from .utils import EpochProgressBar
+
 
 class TrainableHParams(HParams):
     # name of the loss, your `compute_metrics` should return a dict with this name in its keys
@@ -191,6 +193,7 @@ class Trainable(lightning.LightningModule):
             track_grad_norm=self.hparams.track_grad_norm,
             profiler=self.hparams.profiler,
             benchmark=True,
+            callbacks=EpochProgressBar(),
             **trainer_kwargs,
         )
 

@@ -4,6 +4,9 @@ import torch.nn as nn
 
 import warnings
 
+from pytorch_lightning.callbacks import ProgressBarBase
+from pytorch_lightning.callbacks.progress.tqdm_progress import Tqdm
+
 
 def unsqueeze_to(x: torch.Tensor, dim: int, side="right"):
     """ Unsqueeze x1 on the right to match the given dimensionality """
@@ -66,3 +69,25 @@ def make_dense(widths: list[int], activation: str, dropout: float = None):
     network.add_module("Output_Layer", output_layer)
 
     return network
+
+
+class EpochProgressBar(ProgressBarBase):
+    def __init__(self):
+        super().__init__()
+        self.bar = None
+
+    def on_train_start(self, trainer, pl_module):
+        self.bar = Tqdm(
+            desc='Epoch',
+            leave=False,
+            dynamic_ncols=True,
+            total=trainer.max_epochs,
+        )
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        self.bar.update(1)
+        self.bar.set_description(f"Epoch {trainer.current_epoch}")
+        self.bar.set_postfix(self.get_metrics(trainer, pl_module))
+
+    def on_train_end(self, trainer, pl_module):
+        self.bar.close()
