@@ -1,7 +1,7 @@
 import pytest
 
 from trainable import Trainable, TrainableHParams
-from experiments.benchmarks import *
+from trainable.benchmarks import *
 
 import torch
 import torch.distributions as D
