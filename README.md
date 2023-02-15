@@ -69,12 +69,12 @@ Benchmarks provide an easy, clean way to test the inference performance of your 
 *Note:* Benchmarks are still a work-in-progress,
 and as such the process of using them may be either incomplete or at least not pretty.
 
-You can find benchmarks in `experiments/benchmarks`.
+You can find benchmarks in `trainable/benchmarks`.
 Currently, only generative benchmarks are available.
 You can create an infinite, iterable dataset from a generative benchmark like this:
 
 ```python
-from experiments.benchmarks import *
+from trainable.benchmarks import *
 dataset = HypershellsDataset()
 ```
 
