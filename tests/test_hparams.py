@@ -65,4 +65,4 @@ def test_inheritance():
         "override_default": 2,
     }
 
-    d = DerivedHParams(required=1, override=1.0)
+    DerivedHParams(required=1, override=1.0)

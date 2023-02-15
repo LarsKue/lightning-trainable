@@ -25,6 +25,10 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
           pip install -e .
+      - name: Lint with flake8
+        run: |
+          flake8 --config setup.cfg
       - name: Test with pytest
         run: |
-          pytest -m "not slow" --doctest-modules --cov=com --cov-report=xml --cov-report=html
+          # pytest already auto-discovers the config
+          pytest

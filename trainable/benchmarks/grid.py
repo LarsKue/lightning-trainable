@@ -5,7 +5,8 @@ import pandas as pd
 from tqdm import tqdm
 
 
-def benchmark_grid(models: list[type(Trainable)], parameters: list[dict], datasets: list[Dataset], **fit_kwargs) -> pd.DataFrame:
+def benchmark_grid(models: list[type(Trainable)], parameters: list[dict], datasets: list[Dataset], **fit_kwargs)\
+        -> pd.DataFrame:
     """
     Run benchmarks for multiple model types, or multiple parameter sets, across different datasets
     :param models: list of model classes to benchmark
