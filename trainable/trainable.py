@@ -41,7 +41,7 @@ class TrainableHParams(HParams):
     accelerator: str = "gpu"
     devices: int = 1
     max_epochs: int | None
-    max_steps: int | None = None
+    max_steps: int = -1
     optimizer: str = "adam"
     learning_rate: float | int = 1e-3
     weight_decay: float | int = 0
