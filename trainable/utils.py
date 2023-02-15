@@ -78,7 +78,7 @@ class EpochProgressBar(ProgressBarBase):
 
     def on_train_start(self, trainer, pl_module):
         self.bar = Tqdm(
-            desc='Epoch',
+            desc="Epoch",
             leave=False,
             dynamic_ncols=True,
             total=trainer.max_epochs,
