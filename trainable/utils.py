@@ -8,26 +8,6 @@ from pytorch_lightning.callbacks import ProgressBarBase
 from pytorch_lightning.callbacks.progress.tqdm_progress import Tqdm
 
 
-def unsqueeze_to(x: torch.Tensor, dim: int, side="right"):
-    """ Unsqueeze x1 on the right to match the given dimensionality """
-    if dim < x.dim():
-        raise RuntimeError(f"Cannot unsqueeze tensor of dim {x.dim()} to {dim}.")
-
-    idx = [None] * (dim - x.dim())
-    if side == "right":
-        idx = [..., *idx]
-    elif side == "left":
-        idx = [*idx, ...]
-    else:
-        raise ValueError(f"Unknown side: {side}")
-
-    return x[idx]
-
-
-def unsqueeze_as(x1: torch.Tensor, x2: torch.Tensor, **kwargs):
-    return unsqueeze_to(x1, x2.dim(), **kwargs)
-
-
 def get_activation(activation):
     """ Return the corresponding torch Activation function by string """
     match activation.lower():

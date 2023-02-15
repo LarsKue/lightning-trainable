@@ -1,16 +1,21 @@
 
 import torch
 import torch.distributions as D
+from torch.distributions import constraints
 
 from .distribution_dataset import DistributionDataset
 from .utils import sample_sphere
 
 
 class HypershellDistribution(D.Distribution):
+
+    arg_constraints = {"radii": constraints.positive}
+
     def __init__(self, radii: torch.Tensor, dimensions: int = 2, noise: float = 0.1):
         assert radii.dim() == 1
-        super().__init__(batch_shape=(len(radii),), event_shape=(dimensions,))
         self.radii = radii
+        super().__init__(batch_shape=(len(radii),), event_shape=(dimensions,))
+
         self.dimensions = dimensions
         self.noise = noise
 
