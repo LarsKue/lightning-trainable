@@ -41,6 +41,7 @@ class TrainableHParams(HParams):
     accelerator: str = "gpu"
     devices: int = 1
     max_epochs: int | None
+    max_steps: int | None = None
     optimizer: str = "adam"
     learning_rate: float | int = 1e-3
     weight_decay: float | int = 0
@@ -184,6 +185,7 @@ class Trainable(lightning.LightningModule):
             logger=self.configure_logger(**logger_kwargs),
             devices=self.hparams.devices,
             max_epochs=self.hparams.max_epochs,
+            max_steps=self.hparams.max_steps,
             gradient_clip_val=self.hparams.gradient_clip,
             accumulate_grad_batches=self.hparams.accumulate_batches,
             track_grad_norm=self.hparams.track_grad_norm,
