@@ -1,31 +1,36 @@
 
 import torch.distributions as D
-from torch.utils.data import IterableDataset
+from torch.utils.data import IterableDataset, get_worker_info
 
 
 class DistributionDataset(IterableDataset):
     """
-    Infinite dataset based on a torch.distributions.Distribution.
+    Possibly infinite dataset based on a torch.distributions.Distribution.
     Each access contains newly sampled values.
     Values are sampled in batches according to `batch_size`.
     Sampling can be parallelized with multiple workers from a DataLoader.
     """
-    def __init__(self, distribution: D.Distribution, batch_size: int = 32):
+    def __init__(self, distribution: D.Distribution, max_samples: int = None):
         self.distribution = distribution
-        self.batch_size = batch_size
-        self.iterator = None
-        self.resample()
-
-    def resample(self):
-        # resample the data in the current iterator
-        self.iterator = iter(self.distribution.sample((self.batch_size,)))
+        self.max_samples = max_samples
 
     def __iter__(self):
-        return self
+        worker_info = get_worker_info()
+        if self.max_samples is None or worker_info is None:
+            # single-process data loading, return full iterator
+            return DistributionSampler(self.distribution, self.max_samples)
+        else:
+            # in a worker process, split workload
+            return DistributionSampler(self.distribution, self.max_samples // worker_info.num_workers)
+
+
+class DistributionSampler:
+    def __init__(self, distribution, max_samples: int = None):
+        self.distribution = distribution
+        self.max_samples = max_samples
+        self.samples_taken = 0
 
     def __next__(self):
-        try:
-            return next(self.iterator)
-        except StopIteration:
-            self.resample()
-            return next(self.iterator)
+        if self.max_samples is not None and self.samples_taken >= self.max_samples:
+            raise StopIteration
+        return self.distribution.sample(())
