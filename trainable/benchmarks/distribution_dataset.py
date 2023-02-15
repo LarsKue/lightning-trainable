@@ -33,4 +33,5 @@ class DistributionSampler:
     def __next__(self):
         if self.max_samples is not None and self.samples_taken >= self.max_samples:
             raise StopIteration
+        self.samples_taken += 1
         return self.distribution.sample(())
