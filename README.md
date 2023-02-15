@@ -57,6 +57,8 @@ class MyHParams(TrainableHParams):
 ```python
 hparams = MyHParams(
     layer_sizes=[32, 64, 32],
+    max_epochs=10,
+    batch_size=32,
 )
 
 model = MyNetwork(hparams)
