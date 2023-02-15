@@ -15,7 +15,7 @@ class HypershellDistribution(D.Distribution):
         self.noise = noise
 
     def sample(self, sample_shape=torch.Size()):
-        shells = sample_sphere(sample_shape[0], self.dimensions, self.radii)
+        shells = sample_sphere(sample_shape, self.dimensions, self.radii)
         noise = self.noise * torch.randn_like(shells)
         return shells + noise
 

@@ -12,7 +12,7 @@ class HypersphereMixtureDataset(DistributionDataset):
     """
     def __init__(self, dimensions: int = 2, mixtures: int = 8, radius: float = 1.0, std: float = 0.1, **kwargs):
         logits = torch.zeros(mixtures)
-        means = sample_sphere(mixtures, dimensions, radii=torch.tensor([radius])).squeeze(1)
+        means = sample_sphere((mixtures,), dimensions, radii=torch.tensor([radius])).squeeze(1)
         stds = torch.full_like(means, fill_value=std)
         distribution = D.MixtureSameFamily(
             D.Categorical(logits=logits),

@@ -1,12 +1,13 @@
 
 import torch
+from trainable import utils
 
 
-def sample_sphere(samples: int, dimensions: int, radii: torch.Tensor = torch.tensor(1.0)):
-    """ Monte-Carlo sample points uniformly on hyper-spheres """
+def sample_sphere(sample_shape: tuple[int], dimensions: int, radii: torch.Tensor = torch.tensor(1.0)):
     assert radii.dim() == 1
 
-    points = torch.randn(samples, len(radii), dimensions)
-    points = radii[None, :, None] * points / torch.linalg.norm(points, dim=-1, keepdim=True)
+    points = torch.randn(*sample_shape, len(radii), dimensions)
+    radii = utils.unsqueeze_as(radii, points)
+    points = radii * points / torch.linalg.norm(points, dim=-1, keepdim=True)
 
-    return points
+    return points.squeeze(-1)

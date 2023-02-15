@@ -17,4 +17,12 @@ class JointIterableDataset(IterableDataset):
         self.datasets = datasets
 
     def __iter__(self):
-        return zip([iter(ds) for ds in self.datasets])
+        return JointIterator(*[iter(ds) for ds in self.datasets])
+
+
+class JointIterator:
+    def __init__(self, *iterators):
+        self.iterators = iterators
+
+    def __next__(self):
+        return [next(it) for it in self.iterators]
