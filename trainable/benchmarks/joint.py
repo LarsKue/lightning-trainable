@@ -17,4 +17,4 @@ class JointIterableDataset(IterableDataset):
         self.datasets = datasets
 
     def __iter__(self):
-        return zip(*[ds for ds in self.datasets])
+        return zip(*self.datasets)
