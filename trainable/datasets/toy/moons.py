@@ -5,7 +5,7 @@ from torch.distributions import constraints
 
 from sklearn.datasets import make_moons
 
-from .distribution_dataset import DistributionDataset
+from trainable.datasets.core.distribution_dataset import DistributionDataset
 
 
 class MoonsDistribution(D.Distribution):

@@ -65,22 +65,25 @@ model = MyNetwork(hparams)
 model.fit()
 ```
 
+## Datasets
+We aim to provide a rich collection of both toy and benchmark datasets, which work out-of-the-box.
+
+You can find datasets in `trainable/datasets`. Currently, mostly generative datasets are available.
+
+For example, you can create an infinite, iterable dataset from a generative distribution like this:
+
+```python
+from trainable.datasets import *
+dataset = HypershellsDataset()
+```
+
 ## Benchmarks
 Benchmarks provide an easy, clean way to test the inference performance of your models.
 
 *Note:* Benchmarks are still a work-in-progress,
 and as such the process of using them may be either incomplete or at least not pretty.
 
-You can find benchmarks in `trainable/benchmarks`.
-Currently, only generative benchmarks are available.
-You can create an infinite, iterable dataset from a generative benchmark like this:
-
-```python
-from trainable.benchmarks import *
-dataset = HypershellsDataset()
-```
-
-And run your model on this benchmark with `benchmark_grid`:
+Run your model on a dataset benchmark with `benchmark_grid`:
 
 ```python
 results_df = benchmark_grid(models=[MyNetwork], parameters=[hparams], datasets=[dataset])

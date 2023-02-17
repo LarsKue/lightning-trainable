@@ -3,6 +3,7 @@ import torch
 
 
 def sample_sphere(sample_shape: tuple[int], dimensions: int, radii: torch.Tensor = torch.tensor(1.0)):
+    """ Uniformly sample points on a hypersphere """
     assert radii.dim() == 1
 
     points = torch.randn(*sample_shape, len(radii), dimensions)

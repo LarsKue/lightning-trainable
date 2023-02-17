@@ -3,11 +3,16 @@ import torch
 import torch.distributions as D
 from torch.distributions import constraints
 
-from .distribution_dataset import DistributionDataset
+from trainable.datasets.core.distribution_dataset import DistributionDataset
 from .utils import sample_sphere
 
 
 class HypershellDistribution(D.Distribution):
+    """
+    This distribution consists of multiple concentric hyperspherical shells,
+    meaning the density is roughly zero everywhere except on the surface of the hypersphere.
+    Gaussian noise is added to diffuse the density from a delta distribution.
+    """
 
     arg_constraints = {"radii": constraints.positive}
 

@@ -5,7 +5,7 @@ from torch.distributions import constraints
 
 from sklearn.datasets import make_circles
 
-from .distribution_dataset import DistributionDataset
+from trainable.datasets.core.distribution_dataset import DistributionDataset
 
 
 class CirclesDistribution(D.Distribution):

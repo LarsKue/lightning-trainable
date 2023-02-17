@@ -3,6 +3,7 @@ from torch.utils.data import Dataset, IterableDataset
 
 
 class JointDataset(Dataset):
+    """ Dataset that basically zips two or more datasets """
     def __init__(self, *datasets: Dataset):
         super().__init__()
         self.datasets = datasets
@@ -12,6 +13,7 @@ class JointDataset(Dataset):
 
 
 class JointIterableDataset(IterableDataset):
+    """ Iterable Dataset version of JointDataset """
     def __init__(self, *datasets: Dataset):
         super().__init__()
         self.datasets = datasets
