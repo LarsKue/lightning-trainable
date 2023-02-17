@@ -3,8 +3,6 @@ import torch
 import torch.distributions as D
 from torch.distributions import constraints
 
-from sklearn.datasets import make_circles
-
 from trainable.datasets.core.distribution_dataset import DistributionDataset
 
 
@@ -22,9 +20,20 @@ class CirclesDistribution(D.Distribution):
         super().__init__(event_shape=(2,))
 
     def sample(self, sample_shape=torch.Size()):
-        sample_shape = sample_shape or (1,)
-        x, y = make_circles(sample_shape[0], noise=self.noise.item(), factor=self.factor.item())
-        return torch.as_tensor(x, dtype=torch.float32).squeeze()
+        phi = 2 * torch.pi * torch.rand(sample_shape)
+        x = torch.cos(phi)
+        y = torch.sin(phi)
+
+        factors = torch.ones(sample_shape)
+
+        rng = torch.randint(0, 2, size=sample_shape).to(bool)
+        factors[rng] = self.factor
+
+        out = factors[..., None] * torch.stack((x, y), dim=-1)
+
+        noise = self.noise * torch.randn_like(out)
+
+        return out + noise
 
 
 class CirclesDataset(DistributionDataset):
