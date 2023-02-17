@@ -12,8 +12,8 @@ class MoonsDistribution(D.Distribution):
     """
     Distribution based on the sklearn.make_moons function
 
-    Note that this is not exactly equivalent to sklearn's make_moons
-    The data is instead zero-centered
+    Note that this is not exactly equivalent to sklearn's make_moons,
+    this uses zero-centered data, whereas sklearn's make_moons is centered about (0.5, 0)
     """
 
     arg_constraints = {"noise": constraints.positive}
@@ -25,17 +25,12 @@ class MoonsDistribution(D.Distribution):
 
     def sample(self, sample_shape=torch.Size()):
         phi = torch.pi * torch.rand(sample_shape)
-        x1 = torch.cos(phi) - 0.5
-        y1 = torch.sin(phi)
-        x2 = 0.5 - torch.cos(phi)
-        y2 = - torch.sin(phi)
+        x = torch.cos(phi) - 0.5
+        y = torch.sin(phi)
 
-        which = torch.randint(0, 2, size=sample_shape).to(bool)
+        mirror = -1 + 2 * torch.randint(0, 2, size=sample_shape)
 
-        x = torch.where(which, x1, x2)
-        y = torch.where(which, y1, y2)
-
-        out = torch.stack((x, y), dim=-1)
+        out = mirror[..., None] * torch.stack((x, y), dim=-1)
 
         noise = self.noise * torch.randn_like(out)
 
