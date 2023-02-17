@@ -22,8 +22,9 @@ class CirclesDistribution(D.Distribution):
         super().__init__(event_shape=(2,))
 
     def sample(self, sample_shape=torch.Size()):
+        sample_shape = sample_shape or (1,)
         x, y = make_circles(sample_shape[0], noise=self.noise.item(), factor=self.factor.item())
-        return torch.as_tensor(x, dtype=torch.float32)
+        return torch.as_tensor(x, dtype=torch.float32).squeeze()
 
 
 class CirclesDataset(DistributionDataset):
