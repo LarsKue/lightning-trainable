@@ -1,5 +1,4 @@
-from trainable.benchmarks import *
-
+from trainable.datasets import *
 import matplotlib.pyplot as plt
 
 
