@@ -86,6 +86,7 @@ and as such the process of using them may be either incomplete or at least not p
 Run your model on a dataset benchmark with `benchmark_grid`:
 
 ```python
+from trainable.benchmarks import benchmark_grid
 results_df = benchmark_grid(models=[MyNetwork], parameters=[hparams], datasets=[dataset])
 ```
 
