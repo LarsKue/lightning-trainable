@@ -147,6 +147,7 @@ class Trainable(lightning.LightningModule):
         """
         return TensorBoardLogger(
             save_dir=self.log_dir,
+            default_hp_metric=False,
             **kwargs
         )
 
@@ -183,6 +184,8 @@ class Trainable(lightning.LightningModule):
             trainer_kwargs = dict()
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
+        metrics = trainer.validate()
+        trainer.logger.log_hyperparams(self.hparams, metrics)
         trainer.fit(self)
 
         return trainer.validate(self)[0]
