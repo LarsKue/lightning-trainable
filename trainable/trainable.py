@@ -184,7 +184,7 @@ class Trainable(lightning.LightningModule):
             trainer_kwargs = dict()
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
-        metrics = trainer.validate(self)
+        metrics = trainer.validate(self)[0]
         trainer.logger.log_hyperparams(self.hparams, metrics)
         trainer.fit(self)
 
