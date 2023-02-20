@@ -3,8 +3,6 @@ import torch
 import torch.distributions as D
 from torch.distributions import constraints
 
-from sklearn.datasets import make_moons
-
 from trainable.datasets.core.distribution_dataset import DistributionDataset
 
 

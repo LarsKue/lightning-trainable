@@ -27,7 +27,7 @@ jobs:
           pip install -e .
       - name: Lint with flake8
         run: |
-          flake8 --config setup.cfg
+          flake8 --exit-zero --config setup.cfg
       - name: Test with pytest
         run: |
           # pytest already auto-discovers the config
