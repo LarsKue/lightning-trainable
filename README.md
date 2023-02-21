@@ -17,8 +17,10 @@ and then use `pip` to install it in editable mode:
 
 ## Usage
 ### 1. Define your module and datasets, inheriting from `Trainable`:
+
 ```python
-from trainable import Trainable, utils
+from lightning_trainable import Trainable, utils
+
 
 class MyNetwork(Trainable):
     def __init__(self, hparams):
@@ -29,25 +31,27 @@ class MyNetwork(Trainable):
         )
         self.train_data = TensorDataset(...)
         self.val_data = TensorDataset(...)
-    
+
     def compute_metrics(self, batch, batch_idx):
         x, y = batch
         yhat = self.network(x)
         mse = F.mse_loss(yhat, y)
-        
+
         return dict(
             loss=mse
         )
 ```
 
 ### 2. Define your model hparams, inheriting from `TrainableHParams`
+
 ```python
-from trainable import TrainableHParams
+from lightning_trainable import TrainableHParams
+
 
 class MyHParams(TrainableHParams):
     inputs: int = 28 * 28  # MNIST
     outputs: int = 10
-    
+
     layer_sizes: list
     activation: str = "relu"
     dropout: float | int | None = None
@@ -68,12 +72,13 @@ model.fit()
 ## Datasets
 We aim to provide a rich collection of both toy and benchmark datasets, which work out-of-the-box.
 
-You can find datasets in `trainable/datasets`. Currently, mostly generative datasets are available.
+You can find datasets in `lightning_trainable/datasets`. Currently, mostly generative datasets are available.
 
 For example, you can create an infinite, iterable dataset from a generative distribution like this:
 
 ```python
-from trainable.datasets import *
+from lightning_trainable.datasets import *
+
 dataset = HypershellsDataset()
 ```
 
@@ -86,7 +91,8 @@ and as such the process of using them may be either incomplete or at least not p
 Run your model on a dataset benchmark with `benchmark_grid`:
 
 ```python
-from trainable.benchmarks import benchmark_grid
+from lightning_trainable.benchmarks import benchmark_grid
+
 results_df = benchmark_grid(models=[MyNetwork], parameters=[hparams], datasets=[dataset])
 ```
 

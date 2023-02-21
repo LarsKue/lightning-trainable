@@ -1,7 +1,7 @@
 
 import pytest
 
-from trainable import HParams
+from lightning_trainable import HParams
 
 
 def test_defaults():

@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lightning_trainable"
+version = "0.0.1"
+description = "A light-weight lightning_trainable module for pytorch-lightning."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+keywords = ["Machine Learning", "PyTorch", "PyTorch-Lightning"]
+
+authors = [
+    { name = "Lars Kühmichel", email = "lars.kuehmichel@stud.uni-heidelberg.de" }
+]
+
+maintainers = [
+    { name = "Lars Kühmichel", email = "lars.kuehmichel@stud.uni-heidelberg.de" }
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Environment :: GPU :: NVIDIA CUDA :: 12",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "torch ~= 1.13",
+    "torchvision ~= 0.14",
+    "pytorch-lightning ~= 1.9",
+    "tensorboard ~= 2.12",
+    "Pillow ~= 9.4",
+]
+
+[project.optional-dependencies]
+tests = [
+    "flake8 ~= 6.0",
+    "flake8-pyproject ~= 6.0",
+    "pytest ~= 7.2",
+    "pytest-cov ~= 4.0",
+    "numpy ~= 1.24",
+    "matplotlib ~= 3.7",
+]
+
+benchmarks = [
+    "pandas ~= 1.5",
+    "tqdm ~= 4.64",
+]
+
+experiments = [
+    "numpy ~= 1.24",
+    "matplotlib ~= 3.7",
+    "jupyterlab ~= 3.6",
+    "scikit-learn ~= 1.2",
+    "scipy ~= 1.10",
+]
+
+
+[project.urls]
+"Homepage" = "https://github.com/LarsKue/lightning-trainable"
+
+[tool.flake8]
+ignore = [
+    # no line before class docstrings
+    "D203",
+    # star imports
+    "F403",
+    "F405"
+]
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "docs/source/conf.py",
+    "old",
+    "build",
+    "dist",
+]
+count = true
+max-complexity = 10
+max-line-length = 127  # github editor limit
+per-file-ignores = [
+    # imported, but unused
+    "__init__.py: F401"
+]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-m 'not slow' --doctest-modules --cov trainable --cov-report html"

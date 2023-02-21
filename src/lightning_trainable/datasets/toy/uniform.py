@@ -2,7 +2,7 @@
 import torch
 import torch.distributions as D
 
-from trainable.datasets.core.distribution_dataset import DistributionDataset
+from lightning_trainable.datasets.core.distribution_dataset import DistributionDataset
 
 
 class UniformDataset(DistributionDataset):
