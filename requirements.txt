@@ -1,7 +1,0 @@
-torch~=1.13
-torchvision~=0.14
-pytorch-lightning~=1.9
-tensorboard~=2.12
-pandas~=1.5
-tqdm~=4.64
-Pillow~=9.4

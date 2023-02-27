@@ -3,7 +3,7 @@ import torch
 import torch.distributions as D
 from torch.distributions import constraints
 
-from trainable.datasets.core.distribution_dataset import DistributionDataset
+from lightning_trainable.datasets.core.distribution_dataset import DistributionDataset
 
 
 class CirclesDistribution(D.Distribution):

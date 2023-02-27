@@ -1,4 +1,4 @@
-from trainable import Trainable, TrainableHParams
+from lightning_trainable import Trainable, TrainableHParams
 
 
 def test_instantiate():

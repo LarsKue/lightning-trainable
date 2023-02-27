@@ -1,4 +1,4 @@
-from trainable.datasets import *
+from lightning_trainable.datasets import *
 import matplotlib.pyplot as plt
 
 

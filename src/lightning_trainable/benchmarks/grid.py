@@ -1,5 +1,5 @@
 
-from trainable import Trainable
+from lightning_trainable import Trainable
 from torch.utils.data import Dataset
 import pandas as pd
 from tqdm import tqdm
