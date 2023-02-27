@@ -29,6 +29,8 @@ class TrainableHParams(HParams):
     track_grad_norm: int | None = 2
     gradient_clip: float | int | None = None
     profiler: str | Profiler | None = None
+    lr_scheduler: str | None = None
+    num_workers: int = 4
 
 
 class Trainable(lightning.LightningModule):
@@ -89,7 +91,25 @@ class Trainable(lightning.LightningModule):
             case optimizer:
                 raise NotImplementedError(f"Unsupported Optimizer: {optimizer}")
 
-        return optimizer
+        match self.hparams.lr_scheduler:
+            case "1cycle":
+                lr_scheduler = dict(
+                    scheduler=torch.optim.lr_scheduler.OneCycleLR(
+                        optimizer, lr,
+                        epochs=self.hparams.max_epochs,
+                        steps_per_epoch=len(self.train_dataloader())
+                    ),
+                    interval="step"
+                )
+            case None:
+                lr_scheduler = None
+            case _:
+                raise ValueError(f"Unsupported lr_scheduler: {self.hparams.lr_scheduler}")
+
+        return dict(
+            optimizer=optimizer,
+            lr_scheduler=lr_scheduler
+        )
 
     def configure_callbacks(self):
         """
@@ -114,7 +134,7 @@ class Trainable(lightning.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=not isinstance(self.train_data, IterableDataset),
             pin_memory=True,
-            num_workers=4,
+            num_workers=self.hparams.num_workers,
         )
 
     def val_dataloader(self):
@@ -126,7 +146,7 @@ class Trainable(lightning.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=False,
             pin_memory=True,
-            num_workers=4,
+            num_workers=self.hparams.num_workers,
         )
 
     def test_dataloader(self):
@@ -138,7 +158,7 @@ class Trainable(lightning.LightningModule):
             batch_size=self.hparams.batch_size,
             shuffle=False,
             pin_memory=True,
-            num_workers=4,
+            num_workers=self.hparams.num_workers,
         )
 
     def configure_logger(self, **kwargs):
