@@ -84,7 +84,7 @@ def test_riddle():
     class Riddle(HParams):
         foo: int = 3
 
-    assert Riddle(foo=4) == 4
+    assert Riddle(foo=4).foo == 4
 
 
 def test_nested():
