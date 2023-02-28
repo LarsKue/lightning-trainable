@@ -16,7 +16,8 @@ authors = [
 ]
 
 maintainers = [
-    { name = "Lars Kühmichel", email = "lars.kuehmichel@stud.uni-heidelberg.de" }
+    { name = "Lars Kühmichel", email = "lars.kuehmichel@stud.uni-heidelberg.de" },
+    { name = "Felix Draxler", email = "felix.draxler@iwr.uni-heidelberg.de" },
 ]
 
 classifiers = [
