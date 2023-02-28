@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 import pytest
 
@@ -76,6 +76,9 @@ def test_getattr():
     hparams = GetAttr()
     assert hparams.foo == hparams["foo"] == hparams.get("foo")
 
+    with pytest.raises(AttributeError):
+        print(hparams.bar)
+
 
 def test_nested():
     class SubHParams(HParams):
@@ -83,10 +86,15 @@ def test_nested():
 
     class MainHParams(HParams):
         sub_hparams: SubHParams
-        optional_sub_hparams: SubHParams | None = None
-        # This is exactly equivalent to the above
-        other_optional_sub_hparams: Optional[SubHParams] = None
+        # Welcome to Python -- three ways to specify the same meaning, resulting in two different types
+        optional_sub_hparams_v1: SubHParams | None = None
+        optional_sub_hparams_v2: Union[SubHParams, None] = None
+        optional_sub_hparams_v3: Optional[SubHParams] = None
 
-    main_hparams = MainHParams(sub_hparams=dict(foo=7))
-    print(main_hparams, type(main_hparams))
+    main_hparams = MainHParams(
+        sub_hparams=dict(foo=3),
+        optional_sub_hparams_v1=dict(foo=1),
+        optional_sub_hparams_v2=dict(foo=4),
+        optional_sub_hparams_v3=dict(foo=1),
+    )
     assert isinstance(main_hparams.sub_hparams, SubHParams)

@@ -1,5 +1,5 @@
 from inspect import isclass
-from types import GenericAlias
+from types import GenericAlias, UnionType
 from typing import get_origin, Union, get_args
 
 
@@ -116,9 +116,9 @@ class HParams(dict):
             hparam_cls = None
             if isclass(T) and issubclass(T, HParams):
                 hparam_cls = T
-            elif get_origin(T) is Union:
+            elif get_origin(T) is Union or get_origin(T) is UnionType:
                 # Only convert if Union[XHParams, None]
-                unique_union_type, *other_union_types = set(get_args(T)) - {None}
+                unique_union_type, *other_union_types = set(get_args(T)) - {type(None)}
                 if len(other_union_types) == 0 and issubclass(unique_union_type, HParams):
                     hparam_cls = unique_union_type
 
@@ -166,4 +166,6 @@ class HParams(dict):
         Allow `hparams.key` access instead of hparams["key"].
         Useful for type hinting.
         """
-        return self[item]
+        if item in self.keys():
+            return self[item]
+        raise AttributeError(item)
