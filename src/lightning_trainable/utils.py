@@ -6,6 +6,8 @@ import warnings
 from pytorch_lightning.callbacks import ProgressBarBase
 from pytorch_lightning.callbacks.progress.tqdm_progress import Tqdm
 
+from inspect import isclass
+
 
 def get_activation(activation):
     """ Return the corresponding torch Activation function by string """
@@ -70,3 +72,9 @@ class EpochProgressBar(ProgressBarBase):
 
     def on_train_end(self, trainer, pl_module):
         self.bar.close()
+
+
+def type_name(type):
+    if isclass(type):
+        return type.__name__
+    return str(type)

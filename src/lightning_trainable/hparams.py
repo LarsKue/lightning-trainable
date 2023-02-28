@@ -2,11 +2,7 @@ from inspect import isclass
 from types import GenericAlias, UnionType
 from typing import get_origin, Union, get_args
 
-
-def type_name(type):
-    if isclass(type):
-        return type.__name__
-    return str(type)
+from .utils import type_name
 
 
 class HParams(dict):
