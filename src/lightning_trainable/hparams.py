@@ -50,6 +50,8 @@ class HParams(dict):
         """
         Check given hparams for validity, and fill missing ones with defaults.
 
+        Convert nested dicts to HParams if specified.
+
         By default, hparams are valid if and only if:
             1. All required parameters are filled
             2. No unknown parameters are given
@@ -87,6 +89,9 @@ class HParams(dict):
         # insert defaults
         hparams = cls.defaults() | hparams
 
+        # Modify hparams in-place
+        cls.map_values(hparams)
+
         if cls.strict_types:
             # check types match
             for key, value in hparams.items():
@@ -100,6 +105,15 @@ class HParams(dict):
                                     f"but got `{value}` of type `{type(value).__name__}`.")
 
         return hparams
+
+    @classmethod
+    def map_values(cls, hparams):
+        # Convert dicts to HParams
+        all_parameters = cls.parameters()
+        for key, value in hparams.items():
+            T = all_parameters[key]
+            if issubclass(T, HParams) and isinstance(value, dict):
+                hparams[key] = T(**value)
 
     @classmethod
     def parameters(cls) -> dict[str, type]:
@@ -136,3 +150,10 @@ class HParams(dict):
         """ Return names and default values for all optional hparams """
         optional_keys = cls.optional_parameters().keys()
         return {key: getattr(cls, key) for key in optional_keys}
+
+    def __getattr__(self, item):
+        """
+        Allow `hparams.key` access instead of hparams["key"].
+        Useful for type hinting.
+        """
+        return self[item]

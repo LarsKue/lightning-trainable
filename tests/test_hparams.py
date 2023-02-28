@@ -66,3 +66,23 @@ def test_inheritance():
     }
 
     DerivedHParams(required=1, override=1.0)
+
+
+def test_getattr():
+    class GetAttr(HParams):
+        foo: int = 3
+
+    hparams = GetAttr()
+    assert hparams.foo == hparams["foo"] == hparams.get("foo")
+
+
+def test_nested():
+    class SubHParams(HParams):
+        foo: int
+
+    class MainHParams(HParams):
+        sub_hparams: SubHParams
+
+    main_hparams = MainHParams(sub_hparams=dict(foo=7))
+    print(main_hparams, type(main_hparams))
+    assert isinstance(main_hparams.sub_hparams, SubHParams)
