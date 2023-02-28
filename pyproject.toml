@@ -92,4 +92,4 @@ per-file-ignores = [
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-m 'not slow' --doctest-modules --cov trainable --cov-report html"
+addopts = "-m 'not slow' --doctest-modules --cov lightning_trainable --cov-report html"

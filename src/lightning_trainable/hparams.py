@@ -3,6 +3,12 @@ from types import GenericAlias, UnionType
 from typing import get_origin, Union, get_args
 
 
+def type_name(type):
+    if isclass(type):
+        return type.__name__
+    return str(type)
+
+
 class HParams(dict):
     """
     Wrapper class to handle hparams with defaults, required and optional keys, and optional strict type checks
@@ -43,7 +49,7 @@ class HParams(dict):
             if isinstance(T, GenericAlias):
                 basic_type = get_origin(T)
                 raise NotImplementedError(f"HParams does not support type checking for generics. "
-                                          f"Use the basic type `{basic_type.__name__}` instead of `{T}` "
+                                          f"Use the basic type `{type_name(basic_type)}` instead of `{type_name(T)}` "
                                           f"for parameter '{parameter}'.")
 
     @classmethod
@@ -73,7 +79,7 @@ class HParams(dict):
             typenames = [T.__name__ if hasattr(T, "__name__") else repr(T) for T in types]
             message = "Missing the following required hparams:\n"
             message += "\n".join([
-                f"{i + 1:4d}: '{key}' of type `{T}`" for i, (key, T) in enumerate(zip(missing_keys, typenames))
+                f"{i + 1:4d}: '{key}' of type `{type_name(T)}`" for i, (key, T) in enumerate(zip(missing_keys, typenames))
             ])
             raise ValueError(message)
 
@@ -102,8 +108,8 @@ class HParams(dict):
 
                 # noinspection PyTypeHints
                 if not isinstance(value, T):
-                    raise TypeError(f"Hparam '{key}' is required to be of type `{T.__name__}`, "
-                                    f"but got `{value}` of type `{type(value).__name__}`.")
+                    raise TypeError(f"Hparam '{key}' is required to be of type `{type_name(T)}`, "
+                                    f"but got `{value}` of type `{type_name(type(value))}`.")
 
         return hparams
 
