@@ -93,7 +93,7 @@ class HParams(dict):
         hparams = cls.defaults() | hparams
 
         # Modify hparams in-place
-        cls.map_values(hparams)
+        cls._convert_dicts(hparams)
 
         if cls.strict_types:
             # check types match
@@ -110,22 +110,47 @@ class HParams(dict):
         return hparams
 
     @classmethod
-    def map_values(cls, hparams):
-        # Convert dicts to HParams
+    def _convert_dicts(cls, hparams):
+        """ Attempts to convert nested dicts to HParams subclasses, based on the type hint """
         all_parameters = cls.parameters()
         for key, value in hparams.items():
             T = all_parameters[key]
-            hparam_cls = None
-            if isclass(T) and issubclass(T, HParams):
-                hparam_cls = T
-            elif get_origin(T) is Union or get_origin(T) is UnionType:
-                # Only convert if Union[XHParams, None]
-                unique_union_type, *other_union_types = set(get_args(T)) - {type(None)}
-                if len(other_union_types) == 0 and issubclass(unique_union_type, HParams):
-                    hparam_cls = unique_union_type
 
-            if hparam_cls is not None and isinstance(value, dict):
-                hparams[key] = hparam_cls(**value)
+            if not isinstance(value, dict):
+                continue
+
+            if isclass(T) and issubclass(T, HParams):
+                # convert dict to HParams
+                hparams[key] = T(**value)
+                continue
+
+            origin = get_origin(T)
+
+            # explicitly defined Unions, or UnionType for type(int | str)
+            if origin not in [Union, UnionType]:
+                continue
+
+            # convert type hinted ... | XHParams | ... to XHParams
+            types = T.__args__
+
+            if dict in types:
+                # the user may want a dict, do not attempt implicit conversion
+                continue
+
+            subclasses = [t for t in types if issubclass(t, HParams)]
+
+            if not subclasses:
+                # no HParams classes to convert to
+                continue
+
+            if len(subclasses) == 1:
+                # attempt conversion
+                subcls = subclasses[0]
+                hparams[key] = subcls(**value)
+                continue
+
+            raise RuntimeError(f"Cannot implicitly convert dict to {T} "
+                               f"when multiple subclasses of HParams are type-hinted.")
 
     @classmethod
     def parameters(cls) -> dict[str, type]:
