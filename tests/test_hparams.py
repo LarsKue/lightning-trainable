@@ -80,6 +80,13 @@ def test_getattr():
         print(hparams.bar)
 
 
+def test_riddle():
+    class Riddle(HParams):
+        foo: int = 3
+
+    assert Riddle(foo=4).foo == 4
+
+
 def test_nested():
     class SubHParams(HParams):
         foo: int
