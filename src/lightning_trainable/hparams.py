@@ -1,7 +1,7 @@
 from types import GenericAlias
 from typing import get_origin
 
-from utils import type_name
+from .utils import type_name
 
 
 class HParams(dict):
