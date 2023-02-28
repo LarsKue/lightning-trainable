@@ -4,6 +4,10 @@ import pytest
 
 from lightning_trainable import HParams
 
+import pytorch_lightning as pl
+
+pl.LightningModule
+
 
 def test_defaults():
     class Defaults(HParams):

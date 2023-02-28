@@ -163,11 +163,12 @@ class HParams(dict):
         optional_keys = cls.optional_parameters().keys()
         return {key: getattr(cls, key) for key in optional_keys}
 
-    def __getattr__(self, item):
-        """
-        Allow `hparams.key` access instead of hparams["key"].
-        Useful for type hinting.
-        """
-        if item in self.keys():
+    def __getattribute__(self, item):
+        if item in self:
             return self[item]
-        raise AttributeError(item)
+
+        return super().__getattribute__(item)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
