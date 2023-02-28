@@ -1,5 +1,6 @@
+from inspect import isclass
 from types import GenericAlias
-from typing import get_origin
+from typing import get_origin, Union, get_args
 
 
 class HParams(dict):
@@ -112,8 +113,17 @@ class HParams(dict):
         all_parameters = cls.parameters()
         for key, value in hparams.items():
             T = all_parameters[key]
-            if issubclass(T, HParams) and isinstance(value, dict):
-                hparams[key] = T(**value)
+            hparam_cls = None
+            if isclass(T) and issubclass(T, HParams):
+                hparam_cls = T
+            elif get_origin(T) is Union:
+                # Only convert if Union[XHParams, None]
+                unique_union_type, *other_union_types = set(get_args(T)) - {None}
+                if len(other_union_types) == 0 and issubclass(unique_union_type, HParams):
+                    hparam_cls = unique_union_type
+
+            if hparam_cls is not None and isinstance(value, dict):
+                hparams[key] = hparam_cls(**value)
 
     @classmethod
     def parameters(cls) -> dict[str, type]:

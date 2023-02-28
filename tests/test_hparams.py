@@ -1,3 +1,4 @@
+from typing import Optional
 
 import pytest
 
@@ -82,6 +83,9 @@ def test_nested():
 
     class MainHParams(HParams):
         sub_hparams: SubHParams
+        optional_sub_hparams: SubHParams | None = None
+        # This is exactly equivalent to the above
+        other_optional_sub_hparams: Optional[SubHParams] = None
 
     main_hparams = MainHParams(sub_hparams=dict(foo=7))
     print(main_hparams, type(main_hparams))
