@@ -140,4 +140,3 @@ def test_nested_dict():
         MainHParams(
             sub_hparams=dict(foo=7)
         )
-
