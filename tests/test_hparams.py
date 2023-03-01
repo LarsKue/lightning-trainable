@@ -77,18 +77,12 @@ def test_getattr():
     class GetAttr(HParams):
         foo: int = 3
 
-    hparams = GetAttr()
-    assert hparams.foo == hparams["foo"] == hparams.get("foo")
+    foo_val = 4
+    hparams = GetAttr(foo=foo_val)
+    assert hparams.foo == hparams["foo"] == hparams.get("foo") == foo_val
 
     with pytest.raises(AttributeError):
         print(hparams.bar)
-
-
-def test_riddle():
-    class Riddle(HParams):
-        foo: int = 3
-
-    assert Riddle(foo=4).foo == 4
 
 
 def test_nested():
