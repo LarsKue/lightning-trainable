@@ -116,7 +116,9 @@ class HParams(dict):
         for key, value in hparams.items():
             T = all_parameters[key]
 
-            if not isinstance(value, dict):
+            if not isinstance(value, dict) or isinstance(value, HParams):
+                # either not a dict or already a kind of HParams,
+                # so no conversion is necessary
                 continue
 
             if isclass(T) and issubclass(T, HParams):
