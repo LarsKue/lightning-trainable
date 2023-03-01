@@ -103,3 +103,45 @@ def test_nested():
         optional_sub_hparams_v3=dict(foo=1),
     )
     assert isinstance(main_hparams.sub_hparams, SubHParams)
+    assert isinstance(main_hparams.optional_sub_hparams_v1, SubHParams)
+    assert isinstance(main_hparams.optional_sub_hparams_v2, SubHParams)
+    assert isinstance(main_hparams.optional_sub_hparams_v3, SubHParams)
+
+
+def test_nested_dict():
+    class SubHParams(HParams):
+        foo: int
+
+    class MainHParams(HParams):
+        sub_hparams: SubHParams | dict
+
+    main_hparams = MainHParams(
+        sub_hparams=dict(foo=7)
+    )
+
+    # may be subject to change
+    assert isinstance(main_hparams.sub_hparams, dict)
+
+    class SubHParams2(HParams):
+        bar: int
+
+    class MainHParams(HParams):
+        sub_hparams: SubHParams | SubHParams2
+
+    main_hparams = MainHParams(
+        sub_hparams=SubHParams(foo=7)
+    )
+
+    assert isinstance(main_hparams.sub_hparams, SubHParams)
+
+    main_hparams = MainHParams(
+        sub_hparams=SubHParams2(bar=7)
+    )
+
+    assert isinstance(main_hparams.sub_hparams, SubHParams2)
+
+    with pytest.raises(RuntimeError):
+        MainHParams(
+            sub_hparams=dict(foo=7)
+        )
+
