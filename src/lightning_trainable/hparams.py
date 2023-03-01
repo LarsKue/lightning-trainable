@@ -1,5 +1,6 @@
-from types import GenericAlias
-from typing import get_origin
+from inspect import isclass
+from types import GenericAlias, UnionType
+from typing import get_origin, Union, get_args
 
 from .utils import type_name
 
@@ -52,6 +53,8 @@ class HParams(dict):
         """
         Check given hparams for validity, and fill missing ones with defaults.
 
+        Convert nested dicts to HParams if specified.
+
         By default, hparams are valid if and only if:
             1. All required parameters are filled
             2. No unknown parameters are given
@@ -89,6 +92,9 @@ class HParams(dict):
         # insert defaults
         hparams = cls.defaults() | hparams
 
+        # Modify hparams in-place
+        cls._convert_dicts(hparams)
+
         if cls.strict_types:
             # check types match
             for key, value in hparams.items():
@@ -102,6 +108,43 @@ class HParams(dict):
                                     f"but got `{value}` of type `{type_name(type(value))}`.")
 
         return hparams
+
+    @classmethod
+    def _convert_dicts(cls, hparams):
+        """ Attempts to convert nested dicts to HParams subclasses, based on the type hint """
+        all_parameters = cls.parameters()
+        for key, value in hparams.items():
+            T = all_parameters[key]
+
+            if not isinstance(value, dict) or isinstance(value, HParams):
+                # either not a dict or already a kind of HParams,
+                # so no conversion is necessary
+                continue
+
+            if isclass(T) and issubclass(T, HParams):
+                # convert dict to HParams
+                hparam_type = T
+            elif get_origin(T) in [Union, UnionType]:
+                # explicitly defined Unions, or UnionType for type(int | str)
+                # convert type hinted ... | XHParams | ... to XHParams
+                types = get_args(T)
+                if dict in types:
+                    # the user may want a dict, do not attempt implicit conversion
+                    continue
+
+                hparam_types = [t for t in types if issubclass(t, HParams)]
+                if len(hparam_types) == 0:
+                    # no HParams classes to convert to
+                    continue
+                elif len(hparam_types) == 1:
+                    hparam_type = hparam_types[0]
+                else:
+                    raise RuntimeError(f"Cannot implicitly convert dict to {type_name(T)} "
+                                       f"when multiple subclasses of HParams are type-hinted for key {key!r}.")
+            else:
+                continue
+
+            hparams[key] = hparam_type(**value)
 
     @classmethod
     def parameters(cls) -> dict[str, type]:
@@ -138,3 +181,12 @@ class HParams(dict):
         """ Return names and default values for all optional hparams """
         optional_keys = cls.optional_parameters().keys()
         return {key: getattr(cls, key) for key in optional_keys}
+
+    def __getattribute__(self, item):
+        if item in self:
+            return self[item]
+
+        return super().__getattribute__(item)
+
+    def __setattr__(self, key, value):
+        self[key] = value

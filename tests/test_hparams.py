@@ -1,3 +1,4 @@
+from typing import Optional, Union
 
 import pytest
 
@@ -66,3 +67,76 @@ def test_inheritance():
     }
 
     DerivedHParams(required=1, override=1.0)
+
+
+def test_getattr():
+    class GetAttr(HParams):
+        foo: int = 3
+
+    foo_val = 4
+    hparams = GetAttr(foo=foo_val)
+    assert hparams.foo == hparams["foo"] == hparams.get("foo") == foo_val
+
+    with pytest.raises(AttributeError):
+        print(hparams.bar)
+
+
+def test_nested():
+    class SubHParams(HParams):
+        foo: int
+
+    class MainHParams(HParams):
+        sub_hparams: SubHParams
+        # Welcome to Python -- three ways to specify the same meaning, resulting in two different types
+        optional_sub_hparams_v1: SubHParams | None = None
+        optional_sub_hparams_v2: Union[SubHParams, None] = None
+        optional_sub_hparams_v3: Optional[SubHParams] = None
+
+    main_hparams = MainHParams(
+        sub_hparams=dict(foo=3),
+        optional_sub_hparams_v1=dict(foo=1),
+        optional_sub_hparams_v2=dict(foo=4),
+        optional_sub_hparams_v3=dict(foo=1),
+    )
+    assert isinstance(main_hparams.sub_hparams, SubHParams)
+    assert isinstance(main_hparams.optional_sub_hparams_v1, SubHParams)
+    assert isinstance(main_hparams.optional_sub_hparams_v2, SubHParams)
+    assert isinstance(main_hparams.optional_sub_hparams_v3, SubHParams)
+
+
+def test_nested_dict():
+    class SubHParams(HParams):
+        foo: int
+
+    class MainHParams(HParams):
+        sub_hparams: SubHParams | dict
+
+    main_hparams = MainHParams(
+        sub_hparams=dict(foo=7)
+    )
+
+    # may be subject to change
+    assert isinstance(main_hparams.sub_hparams, dict)
+
+    class SubHParams2(HParams):
+        bar: int
+
+    class MainHParams(HParams):
+        sub_hparams: SubHParams | SubHParams2
+
+    main_hparams = MainHParams(
+        sub_hparams=SubHParams(foo=7)
+    )
+
+    assert isinstance(main_hparams.sub_hparams, SubHParams)
+
+    main_hparams = MainHParams(
+        sub_hparams=SubHParams2(bar=7)
+    )
+
+    assert isinstance(main_hparams.sub_hparams, SubHParams2)
+
+    with pytest.raises(RuntimeError):
+        MainHParams(
+            sub_hparams=dict(foo=7)
+        )
