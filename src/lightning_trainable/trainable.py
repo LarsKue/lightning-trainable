@@ -22,6 +22,7 @@ class TrainableHParams(HParams):
     max_epochs: int | None
     max_steps: int = -1
     optimizer: str = "adam"
+    betas: tuple | list = (0.9, 0.999)
     learning_rate: float | int = 1e-3
     weight_decay: float | int = 0
     batch_size: int
@@ -31,6 +32,7 @@ class TrainableHParams(HParams):
     profiler: str | Profiler | None = None
     lr_scheduler: str | None = None
     num_workers: int = 4
+    name: str = "lightning_logs"
 
 
 class Trainable(lightning.LightningModule):
@@ -83,11 +85,12 @@ class Trainable(lightning.LightningModule):
         """
         lr = self.hparams.learning_rate
         weight_decay = self.hparams.weight_decay
+        betas = self.hparams.betas
         match self.hparams.optimizer.lower():
             case "adam":
-                optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+                optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay, betas=betas)
             case "rmsprop":
-                optimizer = torch.optim.RMSprop(self.parameters(), lr=lr, weight_decay=weight_decay)
+                optimizer = torch.optim.RMSprop(self.parameters(), lr=lr, weight_decay=weight_decay, alpha=betas[1], momentum=betas[0])
             case optimizer:
                 raise NotImplementedError(f"Unsupported Optimizer: {optimizer}")
 
@@ -167,6 +170,7 @@ class Trainable(lightning.LightningModule):
         """
         return TensorBoardLogger(
             save_dir=self.log_dir,
+            name=self.hparams.name,
             default_hp_metric=False,
             **kwargs
         )
