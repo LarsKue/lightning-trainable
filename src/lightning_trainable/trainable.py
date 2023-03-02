@@ -105,7 +105,11 @@ class Trainable(lightning.LightningModule):
                     interval="step"
                 )
             case None:
-                lr_scheduler = None
+                lr_scheduler = dict(
+                    scheduler=torch.optim.lr_scheduler.LambdaLR(
+                        optimizer, lambda *args: 1),
+                    interval="epoch"
+                )
             case _:
                 raise ValueError(f"Unsupported lr_scheduler: {self.hparams.lr_scheduler}")
 
