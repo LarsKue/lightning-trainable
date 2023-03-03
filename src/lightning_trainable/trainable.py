@@ -115,9 +115,13 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return train callbacks for Lightning
         """
+        if self.val_data is not None:
+            monitor = f"training/{self.hparams.loss}"
+        else:
+            monitor = f"validation/{self.hparams.loss}"
         return [
             lightning.callbacks.ModelCheckpoint(
-                monitor=f"validation/{self.hparams.loss}",
+                monitor=monitor,
                 save_last=True,
                 every_n_epochs=25,
                 save_top_k=5
@@ -129,6 +133,8 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the train dataloader
         """
+        if self.train_data is None:
+            return None
         return DataLoader(
             dataset=self.train_data,
             batch_size=self.hparams.batch_size,
@@ -141,6 +147,8 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the validation dataloader
         """
+        if self.val_data is None:
+            return None
         return DataLoader(
             dataset=self.val_data,
             batch_size=self.hparams.batch_size,
@@ -153,6 +161,8 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the test dataloader
         """
+        if self.test_data is None:
+            return None
         return DataLoader(
             dataset=self.test_data,
             batch_size=self.hparams.batch_size,
@@ -204,8 +214,16 @@ class Trainable(lightning.LightningModule):
             trainer_kwargs = dict()
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
-        metrics = trainer.validate(self)[0]
+        metrics_list = trainer.validate(self)
+        if len(metrics_list) > 0:
+            metrics = metrics_list[0]
+        else:
+            metrics = {}
         trainer.logger.log_hyperparams(self.hparams, metrics)
         trainer.fit(self)
 
-        return trainer.validate(self)[0]
+        metrics_list = trainer.validate(self)
+        if len(metrics_list) > 0:
+            return metrics_list[0]
+        else:
+            return {}
