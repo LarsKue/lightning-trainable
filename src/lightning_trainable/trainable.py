@@ -115,7 +115,7 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return train callbacks for Lightning
         """
-        if self.val_data is not None:
+        if self.val_data is None:
             monitor = f"training/{self.hparams.loss}"
         else:
             monitor = f"validation/{self.hparams.loss}"
