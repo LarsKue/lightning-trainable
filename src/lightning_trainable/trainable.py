@@ -22,9 +22,7 @@ class TrainableHParams(HParams):
     max_epochs: int | None
     max_steps: int = -1
     optimizer: str = "adam"
-    betas: tuple | list = (0.9, 0.999)
-    learning_rate: float | int = 1e-3
-    weight_decay: float | int = 0
+    optimizer_kwargs: dict = {}
     batch_size: int
     accumulate_batches: int | None = None
     track_grad_norm: int | None = 2
@@ -32,7 +30,6 @@ class TrainableHParams(HParams):
     profiler: str | Profiler | None = None
     lr_scheduler: str | None = None
     num_workers: int = 4
-    name: str = "lightning_logs"
 
 
 class Trainable(lightning.LightningModule):
@@ -40,6 +37,7 @@ class Trainable(lightning.LightningModule):
             self,
             hparams: TrainableHParams | dict,
             log_dir: Path | str = "lightning_logs",
+            name: Path | str = "lightning_logs",
             train_data: Dataset = None,
             val_data: Dataset = None,
             test_data: Dataset = None
@@ -50,6 +48,7 @@ class Trainable(lightning.LightningModule):
         self.save_hyperparameters(hparams)
 
         self.log_dir = Path(log_dir)
+        self.name = Path(name)
 
         self.train_data = train_data
         self.val_data = val_data
@@ -83,40 +82,32 @@ class Trainable(lightning.LightningModule):
         """
         Configure optimizers for Lightning
         """
-        lr = self.hparams.learning_rate
-        weight_decay = self.hparams.weight_decay
-        betas = self.hparams.betas
+
         match self.hparams.optimizer.lower():
             case "adam":
-                optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay, betas=betas)
+                optimizer = torch.optim.Adam(self.parameters(), **self.hparams.optimizer_kwargs)
             case "rmsprop":
-                optimizer = torch.optim.RMSprop(self.parameters(), lr=lr, weight_decay=weight_decay, alpha=betas[1], momentum=betas[0])
+                optimizer = torch.optim.RMSprop(self.parameters(), **self.hparams.optimizer_kwargs)
             case optimizer:
                 raise NotImplementedError(f"Unsupported Optimizer: {optimizer}")
 
         match self.hparams.lr_scheduler:
             case "1cycle":
-                lr_scheduler = dict(
+                lr = optimizer.defaults["lr"]
+                lr_scheduler = [dict(
                     scheduler=torch.optim.lr_scheduler.OneCycleLR(
                         optimizer, lr,
                         epochs=self.hparams.max_epochs,
                         steps_per_epoch=len(self.train_dataloader())
                     ),
                     interval="step"
-                )
+                )]
             case None:
-                lr_scheduler = dict(
-                    scheduler=torch.optim.lr_scheduler.LambdaLR(
-                        optimizer, lambda *args: 1),
-                    interval="epoch"
-                )
+                lr_scheduler = []
             case _:
                 raise ValueError(f"Unsupported lr_scheduler: {self.hparams.lr_scheduler}")
 
-        return dict(
-            optimizer=optimizer,
-            lr_scheduler=lr_scheduler
-        )
+        return [optimizer], lr_scheduler
 
     def configure_callbacks(self):
         """
@@ -174,7 +165,7 @@ class Trainable(lightning.LightningModule):
         """
         return TensorBoardLogger(
             save_dir=self.log_dir,
-            name=self.hparams.name,
+            name=self.name,
             default_hp_metric=False,
             **kwargs
         )
