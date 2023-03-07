@@ -1,6 +1,6 @@
-
-from .hparams import HParams
-from .trainable import Trainable, TrainableHParams
-
-from . import datasets
 from . import benchmarks
+from . import callbacks
+from . import datasets
+from . import trainable
+
+from .trainable import *
