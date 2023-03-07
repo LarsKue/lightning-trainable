@@ -37,7 +37,6 @@ class Trainable(lightning.LightningModule):
     def __init__(
             self,
             hparams: TrainableHParams | dict,
-            log_dir: Path | str = "lightning_logs",
             train_data: Dataset = None,
             val_data: Dataset = None,
             test_data: Dataset = None
@@ -46,8 +45,6 @@ class Trainable(lightning.LightningModule):
         if not isinstance(hparams, TrainableHParams):
             hparams = TrainableHParams(**hparams)
         self.save_hyperparameters(hparams)
-
-        self.log_dir = Path(log_dir)
 
         self.train_data = train_data
         self.val_data = val_data
@@ -176,7 +173,6 @@ class Trainable(lightning.LightningModule):
         Configure and return the Logger to be used by the Lightning.Trainer
         """
         return TensorBoardLogger(
-            save_dir=self.log_dir,
             default_hp_metric=False,
             **kwargs
         )
