@@ -49,5 +49,3 @@ class DenseTrainable(Trainable):
                 return nn.Sigmoid()
             case other:
                 raise NotImplementedError(f"{self.__class__.__name__} does not support activation '{other}'.")
-
-
