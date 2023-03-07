@@ -1,3 +1,4 @@
+import os
 
 from .hparams import HParams
 
@@ -172,6 +173,9 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the Logger to be used by the Lightning.Trainer
         """
+        if "save_dir" not in kwargs:
+            # This is the default in lightning
+            kwargs["save_dir"] = os.getcwd()
         return TensorBoardLogger(
             default_hp_metric=False,
             **kwargs
