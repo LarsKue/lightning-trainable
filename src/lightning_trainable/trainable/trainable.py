@@ -1,3 +1,4 @@
+import os
 
 from .hparams import HParams
 
@@ -52,7 +53,6 @@ class Trainable(lightning.LightningModule):
         raise NotImplementedError
 
     def training_step(self, batch, batch_idx):
-        print(list(self.trainer.callbacks))
         metrics = self.compute_metrics(batch, batch_idx)
         if self.hparams.loss not in metrics:
             raise RuntimeError(f"You must return the loss '{self.hparams.loss}' from `compute_metrics`.")
@@ -148,9 +148,13 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return train callbacks for Lightning
         """
+        if self.val_data is None:
+            monitor = f"training/{self.hparams.loss}"
+        else:
+            monitor = f"validation/{self.hparams.loss}"
         return [
             lightning.callbacks.ModelCheckpoint(
-                monitor=f"validation/{self.hparams.loss}",
+                monitor=monitor,
                 save_last=True,
                 every_n_epochs=25,
                 save_top_k=5
@@ -163,6 +167,8 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the train dataloader
         """
+        if self.train_data is None:
+            return None
         return DataLoader(
             dataset=self.train_data,
             batch_size=self.hparams.batch_size,
@@ -175,6 +181,8 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the validation dataloader
         """
+        if self.val_data is None:
+            return None
         return DataLoader(
             dataset=self.val_data,
             batch_size=self.hparams.batch_size,
@@ -187,6 +195,8 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the test dataloader
         """
+        if self.test_data is None:
+            return None
         return DataLoader(
             dataset=self.test_data,
             batch_size=self.hparams.batch_size,
@@ -199,7 +209,7 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the Logger to be used by the Lightning.Trainer
         """
-        kwargs.setdefault("save_dir", "lightning_logs")
+        kwargs.setdefault("save_dir", os.getcwd())
         return TensorBoardLogger(
             default_hp_metric=False,
             **kwargs
@@ -237,8 +247,16 @@ class Trainable(lightning.LightningModule):
             trainer_kwargs = dict()
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
-        metrics = trainer.validate(self)[0]
+        metrics_list = trainer.validate(self)
+        if len(metrics_list) > 0:
+            metrics = metrics_list[0]
+        else:
+            metrics = {}
         trainer.logger.log_hyperparams(self.hparams, metrics)
         trainer.fit(self)
 
-        return trainer.validate(self)[0]
+        metrics_list = trainer.validate(self)
+        if len(metrics_list) > 0:
+            return metrics_list[0]
+        else:
+            return {}
