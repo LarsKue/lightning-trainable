@@ -1,4 +1,7 @@
 # lightning-trainable
+
+![Build status](https://github.com/LarsKue/lightning-trainable/workflows/Tests/badge.svg)
+
 A light-weight trainable module for `pytorch-lightning`, aimed at fast prototyping.
 
 This package is intended to further simplify the definition of your `LightningModules`
