@@ -32,6 +32,8 @@ class TrainableHParams(HParams):
 
 
 class Trainable(lightning.LightningModule):
+    hparams: TrainableHParams
+
     def __init__(
             self,
             hparams: TrainableHParams | dict,
@@ -78,11 +80,21 @@ class Trainable(lightning.LightningModule):
         """
         match self.hparams.lr_scheduler:
             case str() as name:
-                kwargs = dict()
+                match name:
+                    case "onecyclelr":
+                        kwargs = dict(
+                            max_lr=optimizer.defaults["lr"],
+                            epochs=self.hparams.max_epochs,
+                            steps_per_epoch=len(self.train_dataloader())
+                        )
+                        interval = "step"
+                    case _:
+                        kwargs = dict()
+                        interval = "step"
                 scheduler = utils.get_scheduler(name)(optimizer, **kwargs)
                 return dict(
                     scheduler=scheduler,
-                    interval="step",
+                    interval=interval,
                 )
             case dict() as kwargs:
                 name = kwargs.pop("name")
@@ -100,7 +112,7 @@ class Trainable(lightning.LightningModule):
                 scheduler = Scheduler(optimizer, **kwargs)
                 return dict(
                     scheduler=scheduler,
-                    interval="step",
+                    interval=interval,
                 )
             case (torch.optim.lr_scheduler._LRScheduler() | torch.optim.lr_scheduler.ReduceLROnPlateau()) as scheduler:
                 return dict(

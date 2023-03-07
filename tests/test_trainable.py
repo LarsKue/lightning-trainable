@@ -26,17 +26,11 @@ def test_simple_model():
 
     train_data = TensorDataset(torch.randn(128, 8))
 
-    max_epochs = 10
     hparams = TrainableHParams(
         accelerator="cpu",
         max_epochs=10,
         batch_size=32,
-        lr_scheduler=dict(
-            name="onecyclelr",
-            max_lr=1e-3,
-            epochs=max_epochs,
-            steps_per_epoch=len(train_data),
-        )
+        lr_scheduler="onecyclelr"
     )
     model = SimpleTrainable(hparams, train_data=train_data)
     model.fit()
