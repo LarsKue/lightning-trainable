@@ -8,9 +8,8 @@ from pytorch_lightning.loggers import TensorBoardLogger
 import torch
 from torch.utils.data import DataLoader, Dataset, IterableDataset
 
-from pathlib import Path
-
-from .utils import EpochProgressBar
+from lightning_trainable import utils
+from lightning_trainable.callbacks import EpochProgressBar
 
 
 class TrainableHParams(HParams):
@@ -21,14 +20,13 @@ class TrainableHParams(HParams):
     devices: int = 1
     max_epochs: int | None
     max_steps: int = -1
-    optimizer: str = "adam"
-    optimizer_kwargs: dict = {}
+    optimizer: str | dict | None = "adam"
+    lr_scheduler: str | dict | None = None
     batch_size: int
     accumulate_batches: int | None = None
     track_grad_norm: int | None = 2
     gradient_clip: float | int | None = None
     profiler: str | Profiler | None = None
-    lr_scheduler: str | None = None
     num_workers: int = 4
 
 
@@ -36,8 +34,6 @@ class Trainable(lightning.LightningModule):
     def __init__(
             self,
             hparams: TrainableHParams | dict,
-            log_dir: Path | str = "lightning_logs",
-            name: Path | str = "lightning_logs",
             train_data: Dataset = None,
             val_data: Dataset = None,
             test_data: Dataset = None
@@ -46,9 +42,6 @@ class Trainable(lightning.LightningModule):
         if not isinstance(hparams, TrainableHParams):
             hparams = TrainableHParams(**hparams)
         self.save_hyperparameters(hparams)
-
-        self.log_dir = Path(log_dir)
-        self.name = Path(name)
 
         self.train_data = train_data
         self.val_data = val_data
@@ -59,6 +52,7 @@ class Trainable(lightning.LightningModule):
         raise NotImplementedError
 
     def training_step(self, batch, batch_idx):
+        print(list(self.trainer.callbacks))
         metrics = self.compute_metrics(batch, batch_idx)
         if self.hparams.loss not in metrics:
             raise RuntimeError(f"You must return the loss '{self.hparams.loss}' from `compute_metrics`.")
@@ -78,36 +72,77 @@ class Trainable(lightning.LightningModule):
         for key, value in metrics.items():
             self.log(f"test/{key}", value)
 
+    def configure_lr_schedulers(self, optimizer):
+        """
+        Configure LR Schedulers for Lightning
+        """
+        match self.hparams.lr_scheduler:
+            case str() as name:
+                kwargs = dict()
+                scheduler = utils.get_scheduler(name)(optimizer, **kwargs)
+                return dict(
+                    scheduler=scheduler,
+                    interval="step",
+                )
+            case dict() as kwargs:
+                name = kwargs.pop("name")
+                interval = "step"
+                if "interval" in kwargs:
+                    interval = kwargs.pop("interval")
+                scheduler = utils.get_scheduler(name)(optimizer, **kwargs)
+                return dict(
+                    scheduler=scheduler,
+                    interval=interval,
+                )
+            case type(torch.optim.lr_scheduler._LRScheduler) as Scheduler:
+                kwargs = dict()
+                interval = "step"
+                scheduler = Scheduler(optimizer, **kwargs)
+                return dict(
+                    scheduler=scheduler,
+                    interval="step",
+                )
+            case (torch.optim.lr_scheduler._LRScheduler() | torch.optim.lr_scheduler.ReduceLROnPlateau()) as scheduler:
+                return dict(
+                    scheduler=scheduler,
+                    interval="step",
+                )
+            case None:
+                # do not use a scheduler
+                return None
+            case other:
+                raise NotImplementedError(f"Unrecognized Scheduler: {other}")
+
     def configure_optimizers(self):
         """
         Configure optimizers for Lightning
         """
+        kwargs = dict()
 
-        match self.hparams.optimizer.lower():
-            case "adam":
-                optimizer = torch.optim.Adam(self.parameters(), **self.hparams.optimizer_kwargs)
-            case "rmsprop":
-                optimizer = torch.optim.RMSprop(self.parameters(), **self.hparams.optimizer_kwargs)
-            case optimizer:
-                raise NotImplementedError(f"Unsupported Optimizer: {optimizer}")
-
-        match self.hparams.lr_scheduler:
-            case "1cycle":
-                lr = optimizer.defaults["lr"]
-                lr_scheduler = [dict(
-                    scheduler=torch.optim.lr_scheduler.OneCycleLR(
-                        optimizer, lr,
-                        epochs=self.hparams.max_epochs,
-                        steps_per_epoch=len(self.train_dataloader())
-                    ),
-                    interval="step"
-                )]
+        match self.hparams.optimizer:
+            case str() as name:
+                optimizer = utils.get_optimizer(name)(self.parameters(), **kwargs)
+            case dict() as kwargs:
+                name = kwargs.pop("name")
+                optimizer = utils.get_optimizer(name)(self.parameters(), **kwargs)
+            case type(torch.optim.Optimizer) as Optimizer:
+                optimizer = Optimizer(self.parameters(), **kwargs)
+            case torch.optim.Optimizer() as optimizer:
+                pass
             case None:
-                lr_scheduler = []
-            case _:
-                raise ValueError(f"Unsupported lr_scheduler: {self.hparams.lr_scheduler}")
+                return None
+            case other:
+                raise NotImplementedError(f"Unrecognized Optimizer: {other}")
 
-        return [optimizer], lr_scheduler
+        lr_scheduler = self.configure_lr_schedulers(optimizer)
+
+        if lr_scheduler is None:
+            return optimizer
+
+        return dict(
+            optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
+        )
 
     def configure_callbacks(self):
         """
@@ -121,6 +156,7 @@ class Trainable(lightning.LightningModule):
                 save_top_k=5
             ),
             lightning.callbacks.LearningRateMonitor(),
+            EpochProgressBar(),
         ]
 
     def train_dataloader(self):
@@ -163,9 +199,8 @@ class Trainable(lightning.LightningModule):
         """
         Configure and return the Logger to be used by the Lightning.Trainer
         """
+        kwargs.setdefault("save_dir", "lightning_logs")
         return TensorBoardLogger(
-            save_dir=self.log_dir,
-            name=self.name,
             default_hp_metric=False,
             **kwargs
         )
@@ -190,7 +225,6 @@ class Trainable(lightning.LightningModule):
             track_grad_norm=self.hparams.track_grad_norm,
             profiler=self.hparams.profiler,
             benchmark=True,
-            callbacks=EpochProgressBar(),
             **trainer_kwargs,
         )
 

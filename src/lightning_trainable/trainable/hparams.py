@@ -2,7 +2,7 @@ from inspect import isclass
 from types import GenericAlias, UnionType
 from typing import get_origin, Union, get_args
 
-from .utils import type_name
+from lightning_trainable.utils import type_name
 
 
 class HParams(dict):
