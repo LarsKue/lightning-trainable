@@ -1,12 +1,34 @@
-
+import torch
 import torch.nn as nn
 
 import warnings
 
-from pytorch_lightning.callbacks import ProgressBarBase
-from pytorch_lightning.callbacks.progress.tqdm_progress import Tqdm
-
 from inspect import isclass
+
+
+def get_optimizer(name):
+    """ Get an optimizer in a case-insensitive way """
+    optimizers = torch.optim.__dict__
+    optimizers = {
+        key.lower(): value for key, value in optimizers.items()
+        if isclass(value) and issubclass(value, torch.optim.Optimizer)
+    }
+
+    return optimizers[name.lower()]
+
+
+def get_scheduler(name):
+    """ Get a scheduler in a case-insensitive way """
+    schedulers = torch.optim.lr_scheduler.__dict__
+    schedulers = {
+        key.lower(): value for key, value in schedulers.items()
+        if isclass(value) and (
+                issubclass(value, torch.optim.lr_scheduler._LRScheduler)
+                or issubclass(value, torch.optim.lr_scheduler.ReduceLROnPlateau)
+        )
+    }
+
+    return schedulers[name.lower()]
 
 
 def get_activation(activation):
@@ -50,28 +72,6 @@ def make_dense(widths: list[int], activation: str, dropout: float = None):
     network.add_module("Output_Layer", output_layer)
 
     return network
-
-
-class EpochProgressBar(ProgressBarBase):
-    def __init__(self):
-        super().__init__()
-        self.bar = None
-
-    def on_train_start(self, trainer, pl_module):
-        self.bar = Tqdm(
-            desc="Epoch",
-            leave=True,
-            dynamic_ncols=True,
-            total=trainer.max_epochs,
-        )
-
-    def on_train_epoch_end(self, trainer, pl_module):
-        self.bar.update(1)
-        self.bar.set_description(f"Epoch {trainer.current_epoch}")
-        self.bar.set_postfix(self.get_metrics(trainer, pl_module))
-
-    def on_train_end(self, trainer, pl_module):
-        self.bar.close()
 
 
 def type_name(type):
