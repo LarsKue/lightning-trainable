@@ -50,8 +50,6 @@ def make_dense(widths: list[int], activation: str, dropout: float = None):
     """ Make a Dense Network from given layer widths and activation function """
     if len(widths) < 2:
         raise ValueError("Need at least Input and Output Layer.")
-    elif len(widths) < 3:
-        warnings.warn("Should use more than zero hidden layers.")
 
     Activation = get_activation(activation)
 
