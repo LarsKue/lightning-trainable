@@ -58,12 +58,8 @@ def make_dense(widths: list[int], activation: str, dropout: float = None):
     network = nn.Sequential()
 
     # input is x, time, condition
-    input_layer = nn.Linear(in_features=widths[0], out_features=widths[1])
-    network.add_module("Input_Layer", input_layer)
-    network.add_module("Input_Activation", Activation())
-
-    for i in range(1, len(widths) - 2):
-        if dropout is not None:
+    for i in range(0, len(widths) - 2):
+        if i > 0 and dropout is not None:
             network.add_module(f"Dropout_{i}", nn.Dropout1d(p=dropout))
         hidden_layer = nn.Linear(in_features=widths[i], out_features=widths[i + 1])
         network.add_module(f"Hidden_Layer_{i}", hidden_layer)
