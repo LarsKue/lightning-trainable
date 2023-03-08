@@ -40,6 +40,8 @@ def get_activation(activation):
             return nn.ELU
         case "selu":
             return nn.SELU
+        case "silu":
+            return nn.SiLU
         case activation:
             raise NotImplementedError(f"Unsupported Activation: {activation}")
 
