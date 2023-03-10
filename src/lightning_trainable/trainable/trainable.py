@@ -1,5 +1,7 @@
 import os
 
+from pytorch_lightning.callbacks import ProgressBarBase
+
 from .hparams import HParams
 
 import pytorch_lightning as lightning
@@ -236,6 +238,9 @@ class Trainable(lightning.LightningModule):
             logger_kwargs = dict()
         if trainer_kwargs is None:
             trainer_kwargs = dict()
+
+        if "enable_progress_bar" not in trainer_kwargs and any(isinstance(callback, ProgressBarBase) for callback in self.configure_callbacks()):
+            trainer_kwargs["enable_progress_bar"] = False
 
         return lightning.Trainer(
             accelerator=self.hparams.accelerator.lower(),
