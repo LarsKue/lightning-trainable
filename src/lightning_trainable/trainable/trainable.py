@@ -29,6 +29,7 @@ class TrainableHParams(HParams):
     gradient_clip: float | int | None = None
     profiler: str | Profiler | None = None
     num_workers: int = 4
+    pin_memory: bool = True
 
 
 class Trainable(lightning.LightningModule):
@@ -185,7 +186,7 @@ class Trainable(lightning.LightningModule):
             dataset=self.train_data,
             batch_size=self.hparams.batch_size,
             shuffle=not isinstance(self.train_data, IterableDataset),
-            pin_memory=True,
+            pin_memory=self.hparams.pin_memory,
             num_workers=self.hparams.num_workers,
         )
 
