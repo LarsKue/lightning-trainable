@@ -202,7 +202,7 @@ class Trainable(lightning.LightningModule):
             dataset=self.val_data,
             batch_size=self.hparams.batch_size,
             shuffle=False,
-            pin_memory=True,
+            pin_memory=self.hparams.pin_memory,
             num_workers=self.hparams.num_workers,
         )
 
@@ -216,7 +216,7 @@ class Trainable(lightning.LightningModule):
             dataset=self.test_data,
             batch_size=self.hparams.batch_size,
             shuffle=False,
-            pin_memory=True,
+            pin_memory=self.hparams.pin_memory,
             num_workers=self.hparams.num_workers,
         )
 
