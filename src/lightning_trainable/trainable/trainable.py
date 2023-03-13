@@ -273,8 +273,8 @@ class Trainable(lightning.LightningModule):
         trainer.logger.log_hyperparams(self.hparams, metrics)
         trainer.fit(self)
 
-        metrics_list = trainer.validate(self)
-        if len(metrics_list) > 0:
-            return metrics_list[0]
-        else:
-            return {}
+        return {
+            key: value.item()
+            for key, value in trainer.callback_metrics.items()
+            if any(key.startswith(key) for key in ["training/", "validation/"])
+        }
