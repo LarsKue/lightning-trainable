@@ -1,5 +1,4 @@
 import os
-import warnings
 
 from pytorch_lightning.callbacks import ProgressBarBase
 
@@ -13,11 +12,11 @@ from torch.utils.data import DataLoader, Dataset, IterableDataset
 from lightning_trainable import utils
 from lightning_trainable.callbacks import EpochProgressBar
 
+from .trainable_hparams import TrainableHParams
+
 
 class SkipBatch(Exception):
     pass
-
-from .trainable_hparams import TrainableHParams
 
 
 class Trainable(lightning.LightningModule):
