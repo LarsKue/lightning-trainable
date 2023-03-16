@@ -68,6 +68,9 @@ class Trainable(lightning.LightningModule):
         except SkipBatch:
             return None
 
+        if metrics is None:
+            raise RuntimeError("If you want to skip a batch, raise `SkipBatch` instead of returning None.")
+
         if self.hparams.loss not in metrics:
             raise RuntimeError(f"You must return the loss '{self.hparams.loss}' from `compute_metrics`.")
 
