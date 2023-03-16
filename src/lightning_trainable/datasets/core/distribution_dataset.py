@@ -15,13 +15,15 @@ class DistributionDataset(IterableDataset):
         self.max_samples = max_samples
 
     def __iter__(self):
+        return DistributionSampler(self.distribution, len(self))
+
+    def __len__(self):
         worker_info = get_worker_info()
         if self.max_samples is None or worker_info is None:
-            # single-process data loading, return full iterator
-            return DistributionSampler(self.distribution, self.max_samples)
+            # single-process data loading
+            return self.max_samples
         else:
-            # in a worker process, split workload
-            return DistributionSampler(self.distribution, self.max_samples // worker_info.num_workers)
+            return self.max_samples // worker_info.num_workers
 
 
 class DistributionSampler:

@@ -3,10 +3,8 @@ import warnings
 
 from pytorch_lightning.callbacks import ProgressBarBase
 
-from .hparams import HParams
 
 import pytorch_lightning as lightning
-from pytorch_lightning.profiler import Profiler
 from pytorch_lightning.loggers import TensorBoardLogger
 
 import torch
@@ -19,27 +17,11 @@ from lightning_trainable.callbacks import EpochProgressBar
 class SkipBatch(Exception):
     pass
 
-
-class TrainableHParams(HParams):
-    # name of the loss, your `compute_metrics` should return a dict with this name in its keys
-    loss: str = "loss"
-
-    accelerator: str = "gpu"
-    devices: int = 1
-    max_epochs: int | None
-    max_steps: int = -1
-    optimizer: str | dict | None = "adam"
-    lr_scheduler: str | dict | None = None
-    batch_size: int
-    accumulate_batches: int | None = None
-    track_grad_norm: int | None = 2
-    gradient_clip: float | int | None = None
-    profiler: str | Profiler | None = None
-    num_workers: int = 4
-    pin_memory: bool = True
+from .trainable_hparams import TrainableHParams
 
 
 class Trainable(lightning.LightningModule):
+    hparams_type = TrainableHParams
     hparams: TrainableHParams
 
     def __init__(
@@ -50,13 +32,16 @@ class Trainable(lightning.LightningModule):
             test_data: Dataset = None
     ):
         super().__init__()
-        if not isinstance(hparams, TrainableHParams):
-            hparams = TrainableHParams(**hparams)
+        if not isinstance(hparams, self.hparams_type):
+            hparams = self.hparams_type(**hparams)
         self.save_hyperparameters(hparams)
 
         self.train_data = train_data
         self.val_data = val_data
         self.test_data = test_data
+
+    def __init_subclass__(cls, **kwargs):
+        cls.hparams_type = cls.__annotations__.get("hparams", TrainableHParams)
 
     def compute_metrics(self, batch, batch_idx) -> dict:
         """ Compute any relevant metrics, including the loss, on the given batch """

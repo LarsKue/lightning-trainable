@@ -3,6 +3,9 @@ from typing import Optional, Union
 import pytest
 
 from lightning_trainable import HParams
+from lightning_trainable.hparams import Choice
+
+from typing import Literal
 
 
 def test_defaults():
@@ -140,3 +143,21 @@ def test_nested_dict():
         MainHParams(
             sub_hparams=dict(foo=7)
         )
+
+
+def test_choice():
+    class ChoiceHParams(HParams):
+        value: Choice("x", "y", "z")
+
+    hparams = ChoiceHParams(value="x")
+    assert isinstance(hparams.value, str)
+    assert hparams.value == "x"
+
+    hparams = ChoiceHParams(value="y")
+    assert hparams.value == "y"
+
+    hparams = ChoiceHParams(value="z")
+    assert hparams.value == "z"
+
+    with pytest.raises(TypeError):
+        hparams = ChoiceHParams(value="asdf")

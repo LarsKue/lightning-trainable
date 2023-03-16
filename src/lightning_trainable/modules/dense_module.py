@@ -1,24 +1,28 @@
 
-from .trainable import Trainable, TrainableHParams
-
+import torch
 import torch.nn as nn
 
+from lightning_trainable.hparams import HParams
 
-class DenseTrainableHParams(TrainableHParams):
+from .hparams_module import HParamsModule
+
+
+class DenseModuleHParams(HParams):
     inputs: int
     layer_widths: list
     outputs: int
     activation: str = "relu"
 
 
-class DenseTrainable(Trainable):
-    def __init__(self, hparams: DenseTrainableHParams | dict, **kwargs):
-        if not isinstance(hparams, DenseTrainableHParams):
-            hparams = DenseTrainableHParams(**hparams)
+class DenseModule(HParamsModule):
+    hparams: DenseModuleHParams
 
-        super().__init__(hparams, **kwargs)
-
+    def __init__(self, hparams: DenseModuleHParams | dict):
+        super().__init__(hparams)
         self.network = self.configure_network()
+
+    def forward(self, batch: torch.Tensor) -> torch.Tensor:
+        return self.network(batch)
 
     def configure_network(self):
         widths = [self.hparams.inputs, *self.hparams.layer_widths, self.hparams.outputs]
@@ -28,7 +32,7 @@ class DenseTrainable(Trainable):
             layers.append(nn.Linear(w1, w2))
             layers.append(self.configure_activation())
 
-        # remove last activation
+        # drop last activation
         layers = layers[:-1]
 
         return nn.Sequential(*layers)
