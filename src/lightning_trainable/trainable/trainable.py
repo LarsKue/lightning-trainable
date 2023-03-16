@@ -1,4 +1,5 @@
 import os
+import warnings
 
 from pytorch_lightning.callbacks import ProgressBarBase
 
@@ -13,6 +14,10 @@ from torch.utils.data import DataLoader, Dataset, IterableDataset
 
 from lightning_trainable import utils
 from lightning_trainable.callbacks import EpochProgressBar
+
+
+class SkipBatch(Exception):
+    pass
 
 
 class TrainableHParams(HParams):
@@ -58,7 +63,11 @@ class Trainable(lightning.LightningModule):
         raise NotImplementedError
 
     def training_step(self, batch, batch_idx):
-        metrics = self.compute_metrics(batch, batch_idx)
+        try:
+            metrics = self.compute_metrics(batch, batch_idx)
+        except SkipBatch:
+            return None
+
         if self.hparams.loss not in metrics:
             raise RuntimeError(f"You must return the loss '{self.hparams.loss}' from `compute_metrics`.")
 
