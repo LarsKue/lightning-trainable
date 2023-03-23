@@ -24,7 +24,7 @@ class DenseModule(HParamsModule):
     def forward(self, batch: torch.Tensor) -> torch.Tensor:
         return self.network(batch)
 
-    def configure_network(self):
+    def configure_network(self) -> nn.Module:
         widths = [self.hparams.inputs, *self.hparams.layer_widths, self.hparams.outputs]
 
         layers = []
