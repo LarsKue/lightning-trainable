@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from importlib import import_module
 from pathlib import Path
 
-from yaml import full_load, safe_load
+from lightning_trainable.launcher.utils import parse_config_dict
 
 import torch
 
@@ -25,26 +25,7 @@ if __name__ == '__main__':
 
         pydevd_pycharm.settrace('localhost', port=args.pycharm_debug, stdoutToServer=True, stderrToServer=True)
 
-    hparams = {}
-    for arg in args.config_args:
-        if "=" not in arg and any(
-                arg.endswith(suffix) for suffix in [".yaml", ".yml", ".json"]
-        ):
-            # Read multiple entries from .yaml file
-            with open(arg, "r") as file:
-                new_hparams = full_load(file)
-        else:
-            # Read single entry from command line
-            key, value = arg.split("=")
-            new_hparams = {key: safe_load(value)}
-
-        # Merge in new parameters
-        for key, value in new_hparams.items():
-            hparam_level = hparams
-            key_path = key.split(".")
-            for key_entry in key_path[:-1]:
-                hparam_level = hparam_level[key_entry]
-            hparam_level[key_path[-1]] = value
+    hparams = parse_config_dict(args.config_args)
 
     # Set number of threads (potentially move into trainable, but it's a global property)
     num_threads = hparams.get("num_threads", None)
