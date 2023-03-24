@@ -8,7 +8,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from itertools import product
 from math import log10
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from datetime import timedelta
 
 from lightning_trainable.launcher.utils import send_telegram_message
@@ -26,7 +26,7 @@ class RunResult:
     stderr: bytes
 
 
-class ExperimentLauncher:
+class GridLauncher:
     def __init__(self, telegram_info: Dict = None):
         self.running_processes: List[Popen] = []
         self.telegram_info = telegram_info
@@ -35,7 +35,8 @@ class ExperimentLauncher:
         if self.telegram_info is not None:
             send_telegram_message(message, **self.telegram_info)
 
-    def run_configuration(self, config, num_threads: int = None, connect_debug: int = None, verbose=False):
+    def run_configuration(self, config: List[Path | str | Tuple[str, object]], num_threads: int = None,
+                          connect_debug: int = None, verbose=False):
         """
         Runs a single configuration using lightning_trainable.launcher.fit
         in a subprocess and waits for the result.
@@ -45,13 +46,17 @@ class ExperimentLauncher:
             arguments.append("--pycharm-debug")
             arguments.append(str(connect_debug))
 
-        all_config = {
-            "num_threads": num_threads,
-            **config
-        }
-        if len(all_config) > 0:
-            for key, value in all_config.items():
-                arguments.append(f'{key}={dump(value)}')
+        if num_threads is not None:
+            config = config + [("num_threads", num_threads)]
+        if len(config) > 0:
+            for value in config:
+                if isinstance(value, Path):
+                    arguments.append(str(value))
+                elif isinstance(value, tuple):
+                    key, value = value
+                    if isinstance(value, type):
+                        value = f"{value.__module__}.{value.__name__}"
+                    arguments.append(f'{key}={dump(value)}')
 
         out = None if verbose else subprocess.PIPE
         with Popen(['python', '-m', 'lightning_trainable.launcher.fit', *arguments],
@@ -63,19 +68,48 @@ class ExperimentLauncher:
             self.running_processes.remove(process)
             return RunResult(config=config, return_code=process.poll(), stdout=stdout, stderr=stderr)
 
-    def grid_spec_to_list(self, config_spec: Dict[str, list]):
+    def grid_spec_to_list(self, config_spec: Dict[str, list] | List[list | Tuple[str, list]]):
         """
-        Converts a grid of name=list[... values] to a list of dict configurations.
+        Converts a grid of specifications to a list of configurations.
+
+        Each specification can be a list of values to be passed
+        directly to the script or a tuple of a key and a list of values.
+
+        For example:
+        >>> grid_launcher = GridLauncher()
+        >>> grid_launcher.grid_spec_to_list([
+        >>>     ("model", ["tests.test_launcher.BasicTrainable"]),
+        >>>     ["test_launcher_config.yaml"],
+        >>>     ("num_threads", [1, 2, 4]),
+        >>> ])
         """
-        config_keys = list(config_spec.keys())
         configs = []
-        for config_values in product(*config_spec.values()):
-            config = dict(zip(config_keys, config_values))
+
+        fake_keys = set()
+
+        # Create fake keys for non-tuple entries
+        dict_args = []
+        for entry in config_spec:
+            if isinstance(entry, tuple):
+                dict_args.append(entry)
+            else:
+                fake_key = f"fake_key_{len(fake_keys)}"
+                fake_keys.add(fake_key)
+                dict_args.append((fake_key, entry))
+        dict_args = dict(dict_args)
+
+        # Create all possible combinations, removing fake keys
+        config_keys = list(dict_args.keys())
+        for config_values in product(*dict_args.values()):
+            config = [
+                value if key in fake_keys else (key, value)
+                for key, value in zip(config_keys, config_values)
+            ]
             configs.append(config)
         return configs
 
-    def start_runs(self, configs: List[List[Path, str]], num_parallel_runs=None,
-                   num_threads=None, connect_debug: int = None, verbose=False):
+    def start_runs(self, configs: List[List[Path | str]], num_parallel_runs=None,
+                   num_threads=1, connect_debug: int = None, verbose=False):
         """
         Starts a number of runs in parallel and returns the futures.
         """
@@ -93,8 +127,8 @@ class ExperimentLauncher:
         return pool, futures
 
     def run_configs_and_wait(self,
-                             configs: List[List[Path, str]], num_parallel_runs=None,
-                             num_threads=None, connect_debug: int = None, verbose=False) -> List[RunResult]:
+                             configs: List[List[Path | str]], num_parallel_runs=None,
+                             num_threads=1, connect_debug: int = None, verbose=False) -> List[RunResult]:
         """
         Runs a list of configurations in parallel and waits for the results.
         """
@@ -132,7 +166,7 @@ class ExperimentLauncher:
 
         # Print results
         status_counts = status_count_counter(results)
-        print(f"Done running {sum([config.count for config in configs])} experiments: {status_counts}")
+        print(f"Done running {len(configs)} experiments: {status_counts}")
         if len(set(status_counts) - {0}) > 0:
             print(f"Total: {sum(value for key, value in status_counts.items() if key != 0)} FAILED!")
         else:

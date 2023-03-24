@@ -1,11 +1,16 @@
+import os
+from pathlib import Path
+
 import torch
 from lightning_trainable import Trainable, TrainableHParams
 from lightning_trainable.launcher.fit import main
 from torch.utils.data import TensorDataset
 
+from lightning_trainable.launcher.grid import GridLauncher
+
 
 class BasicTrainableHParams(TrainableHParams):
-    data_set_name: str
+    domain: list
 
 
 class BasicTrainable(Trainable):
@@ -13,8 +18,7 @@ class BasicTrainable(Trainable):
         if not isinstance(hparams, BasicTrainableHParams):
             hparams = BasicTrainableHParams(**hparams)
 
-        assert hparams.data_set_name == "sine"
-        x = torch.linspace(-5, 5, 1000)[:, None]
+        x = torch.linspace(*hparams.domain, 1000)[:, None]
         y = torch.sin(x)[:, None]
         train_data = TensorDataset(x, y)
 
@@ -35,8 +39,21 @@ class BasicTrainable(Trainable):
 def test_fit_launcher():
     main([
         "model=tests.test_launcher.BasicTrainable",
-        "batch_size=128",
+        str(Path(__file__).parent / "test_launcher_config.yaml"),
         "max_epochs=1",
-        "data_set_name='sine'",
+        "domain=[-5, 5]",
         "accelerator='cpu'"
     ])
+
+
+def test_grid_launcher():
+    launcher = GridLauncher()
+    config_list = launcher.grid_spec_to_list([
+        ("model", ["tests.test_launcher.BasicTrainable"]),
+        ([Path(__file__).parent / "test_launcher_config.yaml"]),
+        ("max_epochs", [1]),
+        ("domain", [[-5, 5], [-3, 3]]),
+        ("accelerator", ['cpu'])
+    ])
+    results = launcher.run_configs_and_wait(config_list)
+    print(results[0].stderr.decode())

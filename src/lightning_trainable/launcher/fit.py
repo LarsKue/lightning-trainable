@@ -29,7 +29,7 @@ def main(args=None):
     hparams = parse_config_dict(args.config_args)
 
     # Set number of threads (potentially move into trainable, but it's a global property)
-    num_threads = hparams.get("num_threads", None)
+    num_threads = hparams.pop("num_threads", None)
     if num_threads is not None:
         torch.set_num_threads(num_threads)
 
