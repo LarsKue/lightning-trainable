@@ -6,7 +6,7 @@ from urllib.request import Request, urlopen
 from yaml import safe_load
 
 
-def parse_config_dict(config_spec: List[Path, str]):
+def parse_config_dict(config_spec: List[Path | str]):
     hparams = {}
     for arg in config_spec:
         if isinstance(arg, Path) or (
@@ -29,6 +29,7 @@ def parse_config_dict(config_spec: List[Path, str]):
             for key_entry in key_path[:-1]:
                 hparam_level = hparam_level[key_entry]
             hparam_level[key_path[-1]] = value
+    return hparams
 
 
 def send_telegram_message(message: str, token: str, chats: List[int]):

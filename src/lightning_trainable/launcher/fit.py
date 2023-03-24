@@ -6,7 +6,8 @@ from lightning_trainable.launcher.utils import parse_config_dict
 
 import torch
 
-if __name__ == '__main__':
+
+def main(args=None):
     parser = ArgumentParser()
     parser.add_argument("--pycharm-debug", default=False, type=int,
                         help="Port of PyCharm remote debugger to connect to.")
@@ -18,7 +19,7 @@ if __name__ == '__main__':
                                help="Experiment data will be stored `log_dir`'")
     parser.add_argument("config_args", type=str, nargs="*",
                         help="")
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if args.pycharm_debug:
         import pydevd_pycharm
@@ -33,7 +34,7 @@ if __name__ == '__main__':
         torch.set_num_threads(num_threads)
 
     # Load the model
-    module_name, model_name = hparams.pop("model")
+    module_name, model_name = hparams.pop("model").rsplit(".", 1)
     module = import_module(module_name)
     model = getattr(module, model_name)(hparams=hparams)
 
@@ -43,7 +44,7 @@ if __name__ == '__main__':
             save_dir="lightning_logs",
             name=args.name
         )
-    elif args.save_dir is not None:
+    elif args.log_dir is not None:
         save_path = Path(args.save_dir)
         logger_kwargs = dict(
             version=save_path.name,
@@ -54,4 +55,8 @@ if __name__ == '__main__':
         logger_kwargs = dict()
 
     # Fit the model
-    model.fit(logger_kwargs=logger_kwargs)
+    return model.fit(logger_kwargs=logger_kwargs)
+
+
+if __name__ == '__main__':
+    main()
