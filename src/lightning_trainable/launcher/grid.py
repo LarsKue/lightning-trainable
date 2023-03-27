@@ -78,12 +78,12 @@ class GridLauncher:
         directly to the script or a tuple of a key and a list of values.
 
         For example:
-        >>> grid_launcher = GridLauncher()
-        >>> grid_launcher.grid_spec_to_list([ \
-                ("model", ["tests.test_launcher.BasicTrainable"]), \
-                ["test_launcher_config.yaml"], \
-                ("num_threads", [1, 2, 4]), \
-            ])
+        grid_launcher = GridLauncher()
+        grid_launcher.grid_spec_to_list([
+            ("model", ["tests.test_launcher.BasicTrainable"]),
+            ["test_launcher_config.yaml"],
+            ("num_threads", [1, 2, 4]),
+        ])
         """
         configs = []
 
