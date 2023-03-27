@@ -6,7 +6,7 @@ from lightning_trainable import Trainable, TrainableHParams
 from lightning_trainable.launcher.fit import main
 from torch.utils.data import TensorDataset
 
-from lightning_trainable.launcher.grid import GridLauncher
+from lightning_trainable.launcher.grid import GridLauncher, status_count_counter
 
 
 class BasicTrainableHParams(TrainableHParams):
@@ -42,7 +42,8 @@ def test_fit_launcher():
         str(Path(__file__).parent / "test_launcher_config.yaml"),
         "max_epochs=1",
         "domain=[-5, 5]",
-        "accelerator='cpu'"
+        "accelerator='cpu'",
+        "--name", "{model_name};{max_epochs}"
     ])
 
 
@@ -55,5 +56,5 @@ def test_grid_launcher():
         ("domain", [[-5, 5], [-3, 3]]),
         ("accelerator", ['cpu'])
     ])
-    results = launcher.run_configs_and_wait(config_list)
-    print(results[0].stderr.decode())
+    results = launcher.run_configs_and_wait(config_list, cli_args=["--name", "{model_name};{max_epochs}"])
+    assert status_count_counter(results) == {0: 2}

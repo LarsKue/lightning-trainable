@@ -36,7 +36,7 @@ class GridLauncher:
             send_telegram_message(message, **self.telegram_info)
 
     def run_configuration(self, config: List[Path | str | Tuple[str, object]], num_threads: int = None,
-                          connect_debug: int = None, verbose=False):
+                          connect_debug: int = None, verbose=False, cli_args=None):
         """
         Runs a single configuration using lightning_trainable.launcher.fit
         in a subprocess and waits for the result.
@@ -45,6 +45,8 @@ class GridLauncher:
         if connect_debug is not None:
             arguments.append("--pycharm-debug")
             arguments.append(str(connect_debug))
+        if cli_args is not None:
+            arguments.extend(cli_args)
 
         if num_threads is not None:
             config = config + [("num_threads", num_threads)]
@@ -109,7 +111,7 @@ class GridLauncher:
         return configs
 
     def start_runs(self, configs: List[List[Path | str]], num_parallel_runs=None,
-                   num_threads=1, connect_debug: int = None, verbose=False):
+                   num_threads=1, connect_debug: int = None, verbose=False, cli_args=None):
         """
         Starts a number of runs in parallel and returns the futures.
         """
@@ -122,20 +124,22 @@ class GridLauncher:
             futures.append(pool.submit(
                 self.run_configuration,
                 config=config, num_threads=num_threads,
-                connect_debug=connect_debug, verbose=verbose
+                connect_debug=connect_debug, verbose=verbose,
+                cli_args=cli_args
             ))
         return pool, futures
 
     def run_configs_and_wait(self,
                              configs: List[List[Path | str]], num_parallel_runs=None,
-                             num_threads=1, connect_debug: int = None, verbose=False) -> List[RunResult]:
+                             num_threads=1, connect_debug: int = None, verbose=False,
+                             cli_args=None) -> List[RunResult]:
         """
         Runs a list of configurations in parallel and waits for the results.
         """
         pool, futures = self.start_runs(
             configs,
             num_parallel_runs=num_parallel_runs, num_threads=num_threads,
-            connect_debug=connect_debug, verbose=verbose
+            connect_debug=connect_debug, verbose=verbose, cli_args=cli_args
         )
         interrupted_count = 0
         while True:

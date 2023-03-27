@@ -34,15 +34,16 @@ def main(args=None):
         torch.set_num_threads(num_threads)
 
     # Load the model
-    module_name, model_name = hparams.pop("model").rsplit(".", 1)
-    module = import_module(module_name)
-    model = getattr(module, model_name)(hparams=hparams)
+    module_name, model_name = hparams["model"].rsplit(".", 1)
 
     # Log path
     if args.name is not None:
         logger_kwargs = dict(
             save_dir="lightning_logs",
-            name=args.name
+            name=args.name.format(
+                model_name=model_name,
+                **hparams
+            )
         )
     elif args.log_dir is not None:
         save_path = Path(args.save_dir)
@@ -53,6 +54,11 @@ def main(args=None):
         )
     else:
         logger_kwargs = dict()
+
+    # No "model" hparam
+    del hparams["model"]
+    module = import_module(module_name)
+    model = getattr(module, model_name)(hparams=hparams)
 
     # Fit the model
     return model.fit(logger_kwargs=logger_kwargs)
