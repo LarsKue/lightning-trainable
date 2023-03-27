@@ -80,10 +80,10 @@ class GridLauncher:
         For example:
         >>> grid_launcher = GridLauncher()
         >>> grid_launcher.grid_spec_to_list([ \
-        >>>     ("model", ["tests.test_launcher.BasicTrainable"]), \
-        >>>     ["test_launcher_config.yaml"], \
-        >>>     ("num_threads", [1, 2, 4]), \
-        >>> ])
+                ("model", ["tests.test_launcher.BasicTrainable"]), \
+                ["test_launcher_config.yaml"], \
+                ("num_threads", [1, 2, 4]), \
+            ])
         """
         configs = []
 
