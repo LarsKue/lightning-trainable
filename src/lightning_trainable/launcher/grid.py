@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 from dataclasses import dataclass
 from subprocess import Popen
@@ -64,7 +65,7 @@ class GridLauncher:
         with Popen(['python', '-m', 'lightning_trainable.launcher.fit', *arguments],
                    stdout=out, stderr=out,
                    # Signals to controller are not passed to runner
-                   preexec_fn=os.setpgrp) as process:
+                   preexec_fn=None if platform.system() == "Windows" else os.setpgrp) as process:
             self.running_processes.append(process)
             stdout, stderr = process.communicate()
             self.running_processes.remove(process)
