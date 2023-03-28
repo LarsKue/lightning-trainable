@@ -53,13 +53,13 @@ class GridLauncher:
             config = config + [("num_threads", num_threads)]
         if len(config) > 0:
             for value in config:
-                if isinstance(value, Path):
-                    arguments.append(str(value))
-                elif isinstance(value, tuple):
+                if isinstance(value, tuple):
                     key, value = value
                     if isinstance(value, type):
                         value = f"{value.__module__}.{value.__name__}"
                     arguments.append(f'{key}={dump(value)}')
+                else:
+                    arguments.append(str(value))
 
         out = None if verbose else subprocess.PIPE
         with Popen(['python', '-m', 'lightning_trainable.launcher.fit', *arguments],
