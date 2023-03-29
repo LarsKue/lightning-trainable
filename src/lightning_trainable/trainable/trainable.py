@@ -1,10 +1,9 @@
 import os
 
-from pytorch_lightning.callbacks import ProgressBarBase
+import lightning
 
-
-import pytorch_lightning as lightning
-from pytorch_lightning.loggers import TensorBoardLogger
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ProgressBar
+from lightning.pytorch.loggers import Logger, TensorBoardLogger
 
 import torch
 from torch.utils.data import DataLoader, Dataset, IterableDataset
@@ -123,7 +122,7 @@ class Trainable(lightning.LightningModule):
                     scheduler=scheduler,
                     interval=interval,
                 )
-            case type(torch.optim.lr_scheduler._LRScheduler) as Scheduler:
+            case type(torch.optim.lr_scheduler.LRScheduler) as Scheduler:
                 kwargs = dict()
                 interval = "step"
                 scheduler = Scheduler(optimizer, **kwargs)
@@ -131,7 +130,7 @@ class Trainable(lightning.LightningModule):
                     scheduler=scheduler,
                     interval=interval,
                 )
-            case (torch.optim.lr_scheduler._LRScheduler() | torch.optim.lr_scheduler.ReduceLROnPlateau()) as scheduler:
+            case (torch.optim.lr_scheduler.LRScheduler() | torch.optim.lr_scheduler.ReduceLROnPlateau()) as scheduler:
                 return dict(
                     scheduler=scheduler,
                     interval="step",
@@ -190,24 +189,24 @@ class Trainable(lightning.LightningModule):
         else:
             monitor = f"validation/{self.hparams.loss}"
         return [
-            lightning.callbacks.ModelCheckpoint(
+            ModelCheckpoint(
                 monitor=monitor,
                 save_last=True,
                 every_n_epochs=25,
                 save_top_k=5
             ),
-            lightning.callbacks.LearningRateMonitor(),
+            LearningRateMonitor(),
             EpochProgressBar(),
         ]
 
-    def train_dataloader(self) -> DataLoader | None:
+    def train_dataloader(self) -> DataLoader | list[DataLoader]:
         """
         Configures the Train DataLoader for Lightning. Uses the dataset you passed as train_data.
 
         @return: The DataLoader Object.
         """
         if self.train_data is None:
-            return None
+            return []
         return DataLoader(
             dataset=self.train_data,
             batch_size=self.hparams.batch_size,
@@ -216,14 +215,14 @@ class Trainable(lightning.LightningModule):
             num_workers=self.hparams.num_workers,
         )
 
-    def val_dataloader(self) -> DataLoader | None:
+    def val_dataloader(self) -> DataLoader | list[DataLoader]:
         """
         Configures the Validation DataLoader for Lightning. Uses the dataset you passed as val_data.
 
         @return: The DataLoader Object.
         """
         if self.val_data is None:
-            return None
+            return []
         return DataLoader(
             dataset=self.val_data,
             batch_size=self.hparams.batch_size,
@@ -232,14 +231,14 @@ class Trainable(lightning.LightningModule):
             num_workers=self.hparams.num_workers,
         )
 
-    def test_dataloader(self) -> DataLoader | None:
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
         """
         Configures the Test DataLoader for Lightning. Uses the dataset you passed as test_data.
 
         @return: The DataLoader Object.
         """
         if self.test_data is None:
-            return None
+            return []
         return DataLoader(
             dataset=self.test_data,
             batch_size=self.hparams.batch_size,
@@ -248,16 +247,18 @@ class Trainable(lightning.LightningModule):
             num_workers=self.hparams.num_workers,
         )
 
-    def configure_logger(self, **kwargs) -> lightning.loggers.Logger:
+    def configure_logger(self, save_dir=os.getcwd(), **kwargs) -> Logger:
         """
         Instantiate the Logger used by the Trainer in module fitting.
         By default, we use a TensorBoardLogger, but you can use any other logger of your choice.
 
+        @param root_dir: The root directory in which all your experiments with
+            different names and versions will be stored.
         @param kwargs: Keyword-Arguments to the Logger.
         @return: The Logger object.
         """
-        kwargs.setdefault("save_dir", os.getcwd())
         return TensorBoardLogger(
+            save_dir=save_dir,
             default_hp_metric=False,
             **kwargs
         )
@@ -277,7 +278,7 @@ class Trainable(lightning.LightningModule):
         if trainer_kwargs is None:
             trainer_kwargs = dict()
 
-        if "enable_progress_bar" not in trainer_kwargs and any(isinstance(callback, ProgressBarBase) for callback in self.configure_callbacks()):
+        if "enable_progress_bar" not in trainer_kwargs and any(isinstance(callback, ProgressBar) for callback in self.configure_callbacks()):
             trainer_kwargs["enable_progress_bar"] = False
 
         return lightning.Trainer(
@@ -288,11 +289,21 @@ class Trainable(lightning.LightningModule):
             max_steps=self.hparams.max_steps,
             gradient_clip_val=self.hparams.gradient_clip,
             accumulate_grad_batches=self.hparams.accumulate_batches,
-            track_grad_norm=self.hparams.track_grad_norm,
             profiler=self.hparams.profiler,
             benchmark=True,
             **trainer_kwargs,
         )
+
+    def on_before_optimizer_step(self, optimizer):
+        # who doesn't love breaking changes in underlying libraries
+        match self.hparams.track_grad_norm:
+            case int() as norm_type:
+                grad_norm = lightning.pytorch.utilities.grad_norm(self, norm_type=norm_type)
+                self.log_dict(grad_norm)
+            case None:
+                pass
+            case other:
+                raise NotImplementedError(f"Unrecognized grad norm: {other}")
 
     @torch.enable_grad()
     def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None) -> dict:

@@ -1,9 +1,7 @@
+from inspect import isclass
+
 import torch
 import torch.nn as nn
-
-import warnings
-
-from inspect import isclass
 
 
 def get_optimizer(name):
@@ -23,7 +21,7 @@ def get_scheduler(name):
     schedulers = {
         key.lower(): value for key, value in schedulers.items()
         if isclass(value) and (
-                issubclass(value, torch.optim.lr_scheduler._LRScheduler)
+                issubclass(value, torch.optim.lr_scheduler.LRScheduler)
                 or issubclass(value, torch.optim.lr_scheduler.ReduceLROnPlateau)
         )
     }

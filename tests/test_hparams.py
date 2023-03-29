@@ -5,8 +5,6 @@ import pytest
 from lightning_trainable import HParams
 from lightning_trainable.hparams import Choice
 
-from typing import Literal
-
 
 def test_defaults():
     class Defaults(HParams):

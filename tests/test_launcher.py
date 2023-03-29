@@ -1,11 +1,10 @@
-import os
 from pathlib import Path
 
 import torch
-from lightning_trainable import Trainable, TrainableHParams
-from lightning_trainable.launcher.fit import main
 from torch.utils.data import TensorDataset
 
+from lightning_trainable import Trainable, TrainableHParams
+from lightning_trainable.launcher.fit import main
 from lightning_trainable.launcher.grid import GridLauncher, status_count_counter
 
 

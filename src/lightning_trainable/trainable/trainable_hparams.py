@@ -1,6 +1,6 @@
 
 from lightning_trainable.hparams import HParams
-from pytorch_lightning.profiler import Profiler
+from lightning.pytorch.profilers import Profiler
 
 
 class TrainableHParams(HParams):
@@ -14,7 +14,7 @@ class TrainableHParams(HParams):
     optimizer: str | dict | None = "adam"
     lr_scheduler: str | dict | None = None
     batch_size: int
-    accumulate_batches: int | None = None
+    accumulate_batches: int = 1
     track_grad_norm: int | None = 2
     gradient_clip: float | int | None = None
     profiler: str | Profiler | None = None
