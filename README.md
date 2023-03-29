@@ -7,7 +7,7 @@ A light-weight trainable module for `pytorch-lightning`, aimed at fast prototypi
 This package is intended to further simplify the definition of your `LightningModules`
 such that you only need to define a network, hyperparameters, and train metrics.
 
-It also provides some default benchmarks that you can run your models on.
+It also provides some default datasets that you can benchmark your models on.
 
 ## Install
 Clone the repository
@@ -26,6 +26,8 @@ from lightning_trainable import Trainable, utils
 
 
 class MyNetwork(Trainable):
+    hparams: MyHParams  # only if you use custom hparams
+    
     def __init__(self, hparams):
         super().__init__(hparams)
         self.network = utils.make_dense(
@@ -85,22 +87,8 @@ from lightning_trainable.datasets import *
 dataset = HypershellsDataset()
 ```
 
-## Benchmarks
-Benchmarks provide an easy, clean way to test the inference performance of your models.
-
-*Note:* Benchmarks are still a work-in-progress,
-and as such the process of using them may be either incomplete or at least not pretty.
-
-Run your model on a dataset benchmark with `benchmark_grid`:
-
-```python
-from lightning_trainable.benchmarks import benchmark_grid
-
-results_df = benchmark_grid(models=[MyNetwork], parameters=[hparams], datasets=[dataset])
-```
-
-As the name implies, `benchmark_grid` supports passing any number of model classes,
-parameter sets, or datasets. The benchmarks will be run in a meshgrid over what you pass.
+## Experiment Launcher
+(details follow)
 
 ## Additional Details
 For more details, check out the documentation.
