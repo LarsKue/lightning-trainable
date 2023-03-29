@@ -74,6 +74,13 @@ model = MyNetwork(hparams)
 model.fit()
 ```
 
+
+### Now your model can train with automatic metrics logging, hparams logging and checkpointing!
+
+To look at metrics, use `tensorboard --logdir lightning_logs/`.
+
+To load a model checkpoint, use `MyModel.load_from_checkpoint(checkpoint_path)`.
+
 ## Datasets
 We aim to provide a rich collection of both toy and benchmark datasets, which work out-of-the-box.
 
