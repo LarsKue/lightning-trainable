@@ -17,6 +17,8 @@ def main(args=None):
                         help="Load weights from a specified checkpoint. "
                              "You must specify at least a `model` config argument. "
                              "All other config arguments overwrite the values in the stored checkpoint.")
+    parser.add_argument("--loose-load-state-dict", action="store_true", default=False,
+                        help="When loading a state dict, set `strict`=False")
     log_dir_group = parser.add_mutually_exclusive_group()
     log_dir_group.add_argument("--name", type=str,
                                help="Name of experiment. Experiment data will be stored in "
@@ -72,9 +74,18 @@ def main(args=None):
     del hparams["model"]
     model_class = getattr(module, model_name)
     model = model_class(hparams=hparams)
+    from lightning_trainable import Trainable
+    assert isinstance(model, Trainable)
 
     if args.start_from is not None:
-        model.load_state_dict(checkpoint["state_dict"])
+        strict = not args.loose_load_state_dict
+        keys = model.load_state_dict(checkpoint["state_dict"], strict=strict)
+        if not strict:
+            missing_keys, unexpected_keys = keys
+            if len(missing_keys) > 0:
+                print(f"When loading, the following keys were not found: {missing_keys}")
+            if len(unexpected_keys) > 0:
+                print(f"When loading, the following keys were not used: {unexpected_keys}")
 
     # Fit the model
     return model.fit(logger_kwargs=logger_kwargs)
