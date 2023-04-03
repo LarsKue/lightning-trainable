@@ -179,3 +179,19 @@ def test_range():
     with pytest.raises(TypeError):
         # we exclude upper, so this should raise
         hparams = RangeHParams(value=1.0)
+
+
+def test_migrate():
+    class NewHParams(HParams):
+        value: int
+
+        def __init__(self, **hparams):
+            if "old_value" in hparams:
+                hparams["value"] = hparams["old_value"]
+                del hparams["old_value"]
+            super().__init__(**hparams)
+
+    with pytest.raises(ValueError):
+        NewHParams(some_value=1)
+    hparams = NewHParams(old_value=1)
+    hparams = NewHParams(value=1)
