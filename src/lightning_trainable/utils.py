@@ -29,19 +29,26 @@ def get_scheduler(name):
     return schedulers[name.lower()]
 
 
-def get_activation(activation):
-    """ Return the corresponding torch Activation function by string """
-    match activation.lower():
-        case "relu":
-            return nn.ReLU
-        case "elu":
-            return nn.ELU
-        case "selu":
-            return nn.SELU
-        case "silu":
-            return nn.SiLU
-        case activation:
-            raise NotImplementedError(f"Unsupported Activation: {activation}")
+def get_activation(name):
+    """ Get an activation in a case-insensitive way """
+    activations = torch.nn.modules.activation.__dict__
+    activations = {
+        key.lower(): value for key, value in activations.items()
+        if isclass(value) and issubclass(value, torch.nn.Module)
+    }
+
+    return activations[name.lower()]
+
+
+def get_module(name):
+    """ Get a nn.Module in a case-insensitive way """
+    modules = torch.nn.__dict__
+    modules = {
+        key.lower(): value for key, value in modules.items()
+        if isclass(value) and issubclass(value, torch.nn.Module)
+    }
+
+    return modules[name.lower()]
 
 
 def make_dense(widths: list[int], activation: str, dropout: float = None):
@@ -49,7 +56,7 @@ def make_dense(widths: list[int], activation: str, dropout: float = None):
     if len(widths) < 2:
         raise ValueError("Need at least Input and Output Layer.")
 
-    Activation = get_activation(activation)
+    Activation = get_module(activation)
 
     network = nn.Sequential()
 

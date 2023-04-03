@@ -3,15 +3,27 @@ import torch
 import torch.nn as nn
 
 from lightning_trainable.hparams import HParams
+import lightning_trainable.utils as utils
 
 from .hparams_module import HParamsModule
 
 
 class DenseModuleHParams(HParams):
     inputs: int
-    layer_widths: list
     outputs: int
-    activation: str = "relu"
+    layer_widths: list
+    activations: str | list = "relu"
+
+    @classmethod
+    def validate_parameters(cls, hparams):
+        hparams = super().validate_parameters(hparams)
+        activations = hparams["activations"]
+        widths = hparams["layer_widths"]
+        if isinstance(activations, list) and len(activations) != len(widths):
+            raise ValueError(f"Need one activation for each hidden layer ({len(widths)}), "
+                             f"but got {len(activations)}.")
+
+        return hparams
 
 
 class DenseModule(HParamsModule):
@@ -26,30 +38,19 @@ class DenseModule(HParamsModule):
 
     def configure_network(self) -> nn.Module:
         widths = [self.hparams.inputs, *self.hparams.layer_widths, self.hparams.outputs]
+        if isinstance(self.hparams.activations, str):
+            activations = [self.hparams.activations] * len(self.hparams.layer_widths)
+        else:
+            activations = self.hparams.activations
 
         layers = []
-        for (w1, w2) in zip(widths[:-1], widths[1:]):
+        for i, (w1, w2) in enumerate(zip(widths[:-1], widths[1:])):
             layers.append(nn.Linear(w1, w2))
-            layers.append(self.configure_activation())
 
-        # drop last activation
-        layers = layers[:-1]
+            if i < len(activations):
+                layers.append(self.configure_activation(activations[i]))
 
         return nn.Sequential(*layers)
 
-    def configure_activation(self):
-        match self.hparams.activation.lower():
-            case "relu":
-                return nn.ReLU()
-            case "elu":
-                return nn.ELU()
-            case "selu":
-                return nn.SELU()
-            case "leakyrelu":
-                return nn.LeakyReLU()
-            case "tanh":
-                return nn.Tanh()
-            case "sigmoid":
-                return nn.Sigmoid()
-            case other:
-                raise NotImplementedError(f"{self.__class__.__name__} does not support activation '{other}'.")
+    def configure_activation(self, activation: str) -> nn.Module:
+        return utils.get_activation(activation)()
