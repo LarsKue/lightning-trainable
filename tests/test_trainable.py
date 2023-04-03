@@ -34,3 +34,37 @@ def test_simple_model():
     )
     model = SimpleTrainable(hparams, train_data=train_data)
     model.fit()
+
+
+def test_riddle():
+    class SimpleTrainable(Trainable):
+        def __init__(self, hparams: TrainableHParams | dict,
+                     train_data: Dataset = None,
+                     val_data: Dataset = None,
+                     test_data: Dataset = None
+                     ):
+            super().__init__(hparams, train_data, val_data, test_data)
+            self.param = torch.nn.Parameter(torch.randn(8, 1))
+
+        def compute_metrics(self, batch, batch_idx) -> dict:
+            return {
+                "loss": ((batch[0] @ self.param) ** 2).mean()
+            }
+
+    hparams = TrainableHParams(
+        accelerator="cpu",
+        max_epochs=1,
+        batch_size=8,
+        optimizer=dict(
+            name="adam",
+            lr=1e-3,
+        )
+    )
+
+    train_data = TensorDataset(torch.randn(128, 8))
+
+    t1 = SimpleTrainable(hparams, train_data=train_data, val_data=train_data)
+    t1.fit()
+
+    t2 = SimpleTrainable(hparams, train_data=train_data, val_data=train_data)
+    t2.fit()
