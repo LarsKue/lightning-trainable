@@ -2,8 +2,7 @@ from typing import Optional, Union
 
 import pytest
 
-from lightning_trainable import HParams
-from lightning_trainable.hparams import Choice
+from lightning_trainable.hparams import Choice, HParams, Range
 
 
 def test_defaults():
@@ -159,3 +158,24 @@ def test_choice():
 
     with pytest.raises(TypeError):
         hparams = ChoiceHParams(value="asdf")
+
+
+def test_range():
+    class RangeHParams(HParams):
+        value: Range(0, 1, exclude="upper")
+
+    hparams = RangeHParams(value=0.0)
+    assert isinstance(hparams.value, float)
+    assert hparams.value == 0.0
+
+    with pytest.raises(TypeError):
+        # out of range (lower)
+        hparams = RangeHParams(value=-1.0)
+
+    with pytest.raises(TypeError):
+        # out of range (upper)
+        hparams = RangeHParams(value=1.5)
+
+    with pytest.raises(TypeError):
+        # we exclude upper, so this should raise
+        hparams = RangeHParams(value=1.0)
