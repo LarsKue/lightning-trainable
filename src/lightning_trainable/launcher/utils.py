@@ -6,8 +6,9 @@ from urllib.request import Request, urlopen
 from yaml import safe_load
 
 
-def parse_config_dict(config_spec: List[Path | str]):
-    hparams = {}
+def parse_config_dict(config_spec: List[Path | str], hparams: dict=None):
+    if hparams is None:
+        hparams = {}
     for arg in config_spec:
         if isinstance(arg, Path) or (
                 any(
