@@ -323,7 +323,7 @@ class Trainable(lightning.LightningModule):
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
         metrics_list = trainer.validate(self)
-        if len(metrics_list) > 0:
+        if metrics_list is not None and len(metrics_list) > 0:
             metrics = metrics_list[0]
         else:
             metrics = {}
