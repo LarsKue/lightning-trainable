@@ -36,7 +36,7 @@ def test_simple_model():
     model.fit()
 
 
-def test_riddle():
+def test_double_train():
     class SimpleTrainable(Trainable):
         def __init__(self, hparams: TrainableHParams | dict,
                      train_data: Dataset = None,

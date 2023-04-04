@@ -1,5 +1,6 @@
 import os
 from copy import deepcopy
+import pathlib
 
 import lightning
 
@@ -342,3 +343,8 @@ class Trainable(lightning.LightningModule):
             for key, value in trainer.callback_metrics.items()
             if any(key.startswith(key) for key in ["training/", "validation/"])
         }
+
+    @classmethod
+    def load_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "latest", epoch: int | str = "latest", step: int | str = "latest", **kwargs):
+        checkpoint = utils.find_checkpoint(root, version, epoch, step)
+        return cls.load_from_checkpoint(checkpoint, **kwargs)
