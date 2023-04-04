@@ -81,7 +81,9 @@ To look at metrics, use `tensorboard --logdir lightning_logs/`.
 
 To load a model checkpoint, use
 
-```MyModel.load_checkpoint(version=7, epoch="latest")```
+```python
+MyModel.load_checkpoint(version=7, epoch="latest")
+```
 
 Here, you can specify a root directory, version, epoch and step number
 to load your precise checkpoint, or simply load the latest of each.
@@ -89,7 +91,9 @@ to load your precise checkpoint, or simply load the latest of each.
 Alternatively, you can specify the path directly using the base lightning
 variant:
 
-```MyModel.load_from_checkpoint(checkpoint_path)```
+```python
+MyModel.load_from_checkpoint(checkpoint_path)
+```
 
 ## Datasets
 We aim to provide a rich collection of both toy and benchmark datasets, which work out-of-the-box.
