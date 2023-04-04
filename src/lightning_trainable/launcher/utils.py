@@ -1,16 +1,19 @@
 from pathlib import Path
-from typing import List
+from typing import List, Any, Tuple
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from yaml import safe_load
 
 
-def parse_config_dict(config_spec: List[Path | str], hparams: dict=None):
+def parse_config_dict(config_spec: List[Path | str | Tuple[str, Any]], hparams: dict=None):
     if hparams is None:
         hparams = {}
     for arg in config_spec:
-        if isinstance(arg, Path) or (
+        if isinstance(arg, tuple):
+            key, value = arg
+            new_hparams = {key: value}
+        elif isinstance(arg, Path) or (
                 any(
                     arg.endswith(suffix) for suffix in [".yaml", ".yml", ".json"]
                 ) and "=" not in arg
