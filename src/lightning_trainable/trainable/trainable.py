@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 
 import lightning
 
@@ -113,6 +114,9 @@ class Trainable(lightning.LightningModule):
                     interval=interval,
                 )
             case dict() as kwargs:
+                # Copy the dict so we don't modify the original
+                kwargs = deepcopy(kwargs)
+
                 name = kwargs.pop("name")
                 interval = "step"
                 if "interval" in kwargs:
@@ -155,6 +159,9 @@ class Trainable(lightning.LightningModule):
             case str() as name:
                 optimizer = utils.get_optimizer(name)(self.parameters(), **kwargs)
             case dict() as kwargs:
+                # Copy the dict so we don't modify the original
+                kwargs = deepcopy(kwargs)
+
                 name = kwargs.pop("name")
                 optimizer = utils.get_optimizer(name)(self.parameters(), **kwargs)
             case type(torch.optim.Optimizer) as Optimizer:
