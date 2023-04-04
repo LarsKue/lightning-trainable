@@ -15,7 +15,7 @@ class TrainableHParams(HParams):
     lr_scheduler: str | dict | None = None
     batch_size: int
     accumulate_batches: int = 1
-    track_grad_norm: int | None = 2
+    track_grad_norm: int | None = None
     gradient_clip: float | int | None = None
     profiler: str | Profiler | None = None
     num_workers: int = 4
