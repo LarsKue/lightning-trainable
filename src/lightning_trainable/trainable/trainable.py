@@ -70,19 +70,22 @@ class Trainable(lightning.LightningModule):
             raise RuntimeError(f"You must return the loss '{self.hparams.loss}' from `compute_metrics`.")
 
         for key, value in metrics.items():
-            self.log(f"training/{key}", value)
+            self.log(f"training/{key}", value,
+                     prog_bar=key == self.hparams.loss)
 
         return metrics[self.hparams.loss]
 
     def validation_step(self, batch, batch_idx):
         metrics = self.compute_metrics(batch, batch_idx)
         for key, value in metrics.items():
-            self.log(f"validation/{key}", value)
+            self.log(f"validation/{key}", value,
+                     prog_bar=key == self.hparams.loss)
 
     def test_step(self, batch, batch_idx):
         metrics = self.compute_metrics(batch, batch_idx)
         for key, value in metrics.items():
-            self.log(f"test/{key}", value)
+            self.log(f"test/{key}", value,
+                     prog_bar=key == self.hparams.loss)
 
     def configure_lr_schedulers(self, optimizer):
         """
