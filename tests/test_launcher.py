@@ -57,3 +57,24 @@ def test_grid_launcher():
     ])
     results = launcher.run_configs_and_wait(config_list, cli_args=["--name", "{model_name};{max_epochs}"])
     assert status_count_counter(results) == {0: 2}
+
+
+def test_fit_start_from():
+    model = BasicTrainable(dict(
+        domain=[-3, 3],
+        max_epochs=1,
+        batch_size=128,
+        accelerator="cpu"
+    ))
+    ckpt_name = "test_lancer.ckpt"
+    trainer = model.configure_trainer()
+    trainer.fit(model)
+    trainer.save_checkpoint(ckpt_name)
+
+    # Continue running, but with larger domain (other variables should be loaded)
+    main([
+        "model=tests.test_launcher.BasicTrainable",
+        "domain=[-5, 5]",
+        "--name", "{model_name};{max_epochs}",
+        "--start-from", ckpt_name
+    ])
