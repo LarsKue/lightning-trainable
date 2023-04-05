@@ -23,7 +23,10 @@ def parse_config_dict(config_spec: List[Path | str | Tuple[str, Any]], hparams: 
                 new_hparams = safe_load(file)
         else:
             # Read single entry from command line
-            key, value = arg.split("=")
+            parts = arg.split("=", 1)
+            if len(parts) != 2:
+                raise ValueError(f"Config arg {arg!r}.")
+            key, value = parts
             new_hparams = {key: safe_load(value)}
 
         # Merge in new parameters
