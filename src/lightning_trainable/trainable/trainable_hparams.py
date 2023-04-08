@@ -20,3 +20,4 @@ class TrainableHParams(HParams):
     profiler: str | Profiler | None = None
     num_workers: int = 4
     pin_memory: bool = True
+    early_stopping: int | None = None

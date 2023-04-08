@@ -4,7 +4,7 @@ import pathlib
 
 import lightning
 
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ProgressBar
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ProgressBar, EarlyStopping
 from lightning.pytorch.loggers import Logger, TensorBoardLogger
 
 import torch
@@ -199,7 +199,7 @@ class Trainable(lightning.LightningModule):
             monitor = f"training/{self.hparams.loss}"
         else:
             monitor = f"validation/{self.hparams.loss}"
-        return [
+        callbacks = [
             ModelCheckpoint(
                 monitor=monitor,
                 save_last=True,
@@ -209,6 +209,9 @@ class Trainable(lightning.LightningModule):
             LearningRateMonitor(),
             EpochProgressBar(),
         ]
+        if self.hparams.early_stopping is not None:
+            callbacks.append(EarlyStopping(monitor, patience=self.hparams.early_stopping))
+        return callbacks
 
     def train_dataloader(self) -> DataLoader | list[DataLoader]:
         """
