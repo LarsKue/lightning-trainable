@@ -320,7 +320,7 @@ class Trainable(lightning.LightningModule):
                 raise NotImplementedError(f"Unrecognized grad norm: {other}")
 
     @torch.enable_grad()
-    def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None) -> dict:
+    def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None, fit_kwargs: dict = None) -> dict:
         """
         Instantiate a Lightning Trainer and use it to fit the module to data.
 
@@ -334,6 +334,8 @@ class Trainable(lightning.LightningModule):
             logger_kwargs = dict()
         if trainer_kwargs is None:
             trainer_kwargs = dict()
+        if fit_kwargs is None:
+            fit_kwargs = dict()
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
         metrics_list = trainer.validate(self)
@@ -342,7 +344,7 @@ class Trainable(lightning.LightningModule):
         else:
             metrics = {}
         trainer.logger.log_hyperparams(self.hparams, metrics)
-        trainer.fit(self)
+        trainer.fit(self, **fit_kwargs)
 
         return {
             key: value.item()
