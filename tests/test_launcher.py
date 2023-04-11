@@ -6,6 +6,7 @@ from torch.utils.data import TensorDataset
 from lightning_trainable import Trainable, TrainableHParams
 from lightning_trainable.launcher.fit import main
 from lightning_trainable.launcher.grid import GridLauncher, status_count_counter
+from lightning_trainable.launcher.utils import parse_config_dict
 
 
 class BasicTrainableHParams(TrainableHParams):
@@ -78,3 +79,11 @@ def test_fit_start_from():
         "--name", "{model_name};{max_epochs}",
         "--start-from", ckpt_name
     ])
+
+
+def test_list_hparam_append():
+    config_dict = parse_config_dict([*{
+        "list": [1, 2, 3],
+        "list.+": -1,
+    }.items()])
+    assert config_dict["list"] == [1, 2, 3, -1]
