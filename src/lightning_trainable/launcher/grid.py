@@ -176,7 +176,7 @@ class GridLauncher:
             print(f"Total: {sum(value for key, value in status_counts.items() if key != 0)} FAILED!")
         else:
             print("All succeeded :D")
-        self.send_message(f"Launcher done: {status_counts}")
+        self.send_message(f"Launcher done: {format_status_counts(status_counts)}")
         return results
 
     def fetch_results(self, futures, timeout=None):
