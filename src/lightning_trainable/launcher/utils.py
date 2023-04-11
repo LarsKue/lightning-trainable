@@ -47,7 +47,10 @@ def dict_list_get(dl: dict | list, item):
 
 def dict_list_set(dl: dict | list, item, value):
     if isinstance(dl, list):
-        dl[int(item)] = value
+        if item == "+":
+            dl.append(value)
+        else:
+            dl[int(item)] = value
     else:
         dl[item] = value
 
