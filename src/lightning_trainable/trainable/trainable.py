@@ -4,7 +4,7 @@ import pathlib
 
 import lightning
 
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ProgressBar
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ProgressBar, EarlyStopping
 from lightning.pytorch.loggers import Logger, TensorBoardLogger
 
 import torch
@@ -199,7 +199,7 @@ class Trainable(lightning.LightningModule):
             monitor = f"training/{self.hparams.loss}"
         else:
             monitor = f"validation/{self.hparams.loss}"
-        return [
+        callbacks = [
             ModelCheckpoint(
                 monitor=monitor,
                 save_last=True,
@@ -209,6 +209,9 @@ class Trainable(lightning.LightningModule):
             LearningRateMonitor(),
             EpochProgressBar(),
         ]
+        if self.hparams.early_stopping is not None:
+            callbacks.append(EarlyStopping(monitor, patience=self.hparams.early_stopping))
+        return callbacks
 
     def train_dataloader(self) -> DataLoader | list[DataLoader]:
         """
@@ -317,7 +320,7 @@ class Trainable(lightning.LightningModule):
                 raise NotImplementedError(f"Unrecognized grad norm: {other}")
 
     @torch.enable_grad()
-    def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None) -> dict:
+    def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None, fit_kwargs: dict = None) -> dict:
         """
         Instantiate a Lightning Trainer and use it to fit the module to data.
 
@@ -325,12 +328,15 @@ class Trainable(lightning.LightningModule):
             See also :func:`~trainable.Trainable.configure_logger`.
         @param trainer_kwargs: Keyword-Arguments to the Lightning Trainer.
             See also :func:`~trainable.Trainable.configure_trainer`.
+        @param fit_kwargs: Keyword-Arguments to the Trainer's fit method.
         @return: Validation Metrics as defined in :func:`~trainable.Trainable.compute_metrics`.
         """
         if logger_kwargs is None:
             logger_kwargs = dict()
         if trainer_kwargs is None:
             trainer_kwargs = dict()
+        if fit_kwargs is None:
+            fit_kwargs = dict()
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
         metrics_list = trainer.validate(self)
@@ -339,7 +345,7 @@ class Trainable(lightning.LightningModule):
         else:
             metrics = {}
         trainer.logger.log_hyperparams(self.hparams, metrics)
-        trainer.fit(self)
+        trainer.fit(self, **fit_kwargs)
 
         return {
             key: value.item()

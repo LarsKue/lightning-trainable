@@ -23,7 +23,10 @@ def parse_config_dict(config_spec: List[Path | str | Tuple[str, Any]], hparams: 
                 new_hparams = safe_load(file)
         else:
             # Read single entry from command line
-            key, value = arg.split("=")
+            parts = arg.split("=", 1)
+            if len(parts) != 2:
+                raise ValueError(f"Config arg {arg!r}.")
+            key, value = parts
             new_hparams = {key: safe_load(value)}
 
         # Merge in new parameters
@@ -31,10 +34,25 @@ def parse_config_dict(config_spec: List[Path | str | Tuple[str, Any]], hparams: 
             hparam_level = hparams
             key_path = key.split(".")
             for key_entry in key_path[:-1]:
-                hparam_level = hparam_level[key_entry]
-            hparam_level[key_path[-1]] = value
+                hparam_level = dict_list_get(hparam_level, key_entry)
+            dict_list_set(hparam_level, key_path[-1], value)
     return hparams
 
+
+def dict_list_get(dl: dict | list, item):
+    if isinstance(dl, list):
+        return dl[int(item)]
+    return dl[item]
+
+
+def dict_list_set(dl: dict | list, item, value):
+    if isinstance(dl, list):
+        if item == "+":
+            dl.append(value)
+        else:
+            dl[int(item)] = value
+    else:
+        dl[item] = value
 
 def send_telegram_message(message: str, token: str, chats: List[int]):
     try:

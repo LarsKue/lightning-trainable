@@ -176,7 +176,7 @@ class GridLauncher:
             print(f"Total: {sum(value for key, value in status_counts.items() if key != 0)} FAILED!")
         else:
             print("All succeeded :D")
-        self.send_message(f"Launcher done: {status_counts}")
+        self.send_message(f"Launcher done: {format_status_counts(status_counts)}")
         return results
 
     def fetch_results(self, futures, timeout=None):
@@ -196,22 +196,33 @@ class GridLauncher:
                 status_counts = status_count_counter(results)
                 result_code = result.return_code
 
+                # Status codes
                 elapsed = pbar.format_dict["elapsed"]
+                status_str = format_status_counts(status_counts)
+                pbar.set_description(status_str)
+
+                # Time as HH:MM:SS
                 elapsed_delta = timedelta(seconds=elapsed)
-                if result_code != 0 and status_counts[result_code] == 10 ** int(
+                elapsed_delta_str = str(elapsed_delta).split(".")[0]
+                if result_code not in [0, "cancelled"] and status_counts[result_code] == 10 ** int(
                         log10(status_counts[result_code])):
                     self.send_message(
                         f"Code {result_code}: {status_counts[result_code]} "
-                        f"failed after {elapsed_delta}."
+                        f"failed after {elapsed_delta_str}.\n"
+                        f"Total: {status_str}"
                     )
-                elif result_code == 0 and elapsed > last_elapsed * 2:
+                elif result_code == 0 and elapsed > min(2 * 60 * 60, last_elapsed * 2):
                     self.send_message(
-                        f"{status_counts[result_code]} succeeded after {elapsed_delta}."
+                        f"{status_counts[result_code]} succeeded after {elapsed_delta_str}.\n"
+                        f"Total: {status_str}"
                     )
                     last_elapsed = elapsed
-                pbar.set_description(str(status_counts))
         return results
 
 
 def status_count_counter(results: List[RunResult]) -> Counter:
     return Counter(result.return_code for result in results)
+
+
+def format_status_counts(status_counts: Counter) -> str:
+    return ", ".join(f"{value}x {key}" for key, value in status_counts.items())

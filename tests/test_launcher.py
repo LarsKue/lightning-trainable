@@ -1,11 +1,13 @@
 from pathlib import Path
 
+import pytest
 import torch
 from torch.utils.data import TensorDataset
 
 from lightning_trainable import Trainable, TrainableHParams
 from lightning_trainable.launcher.fit import main
 from lightning_trainable.launcher.grid import GridLauncher, status_count_counter
+from lightning_trainable.launcher.utils import parse_config_dict
 
 
 class BasicTrainableHParams(TrainableHParams):
@@ -77,4 +79,33 @@ def test_fit_start_from():
         "domain=[-5, 5]",
         "--name", "{model_name};{max_epochs}",
         "--start-from", ckpt_name
+    ])
+
+
+def test_list_hparam_append():
+    config_dict = parse_config_dict([*{
+        "list": [1, 2, 3],
+        "list.+": -1,
+    }.items()])
+    assert config_dict["list"] == [1, 2, 3, -1]
+
+
+def test_gradient_regex():
+    common_args = [
+        "model=tests.test_launcher.BasicTrainable",
+        "domain=[-5, 5]",
+        "max_epochs=1",
+        "batch_size=128",
+        "accelerator='cpu'",
+        "--name", "{model_name};{max_epochs}",
+    ]
+
+    with pytest.raises(RuntimeError):
+        main(common_args + [
+            # No gradient to any parameter causes gradient-free loss
+            "--gradient-regex", "$^"
+        ])
+
+    main(common_args + [
+        "--gradient-regex", "^model.0.weight"
     ])
