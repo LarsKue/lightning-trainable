@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import torch
 from torch.utils.data import TensorDataset
 
@@ -87,3 +88,25 @@ def test_list_hparam_append():
         "list.+": -1,
     }.items()])
     assert config_dict["list"] == [1, 2, 3, -1]
+
+
+def test_gradient_regex():
+    with pytest.raises(RuntimeError):
+        main([
+            "model=tests.test_launcher.BasicTrainable",
+            "domain=[-5, 5]",
+            "max_epochs=1",
+            "batch_size=128",
+            "--name", "{model_name};{max_epochs}",
+            # No gradient to any parameter causes gradient-free loss
+            "--gradient-regex", "$^"
+        ])
+
+    main([
+        "model=tests.test_launcher.BasicTrainable",
+        "domain=[-5, 5]",
+        "max_epochs=1",
+        "batch_size=128",
+        "--name", "{model_name};{max_epochs}",
+        "--gradient-regex", "^model.0.weight"
+    ])

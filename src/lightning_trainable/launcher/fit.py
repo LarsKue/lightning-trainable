@@ -1,3 +1,4 @@
+import re
 from argparse import ArgumentParser
 from importlib import import_module
 from pathlib import Path
@@ -26,6 +27,8 @@ def main(args=None):
                               )
     parser.add_argument("--loose-load-state-dict", action="store_true", default=False,
                         help="When loading a state dict, set `strict`=False")
+    parser.add_argument("--gradient-regex", type=str, default=None,
+                        help="Parameter names must contain regex expression to have gradient applied.")
     log_dir_group = parser.add_mutually_exclusive_group()
     log_dir_group.add_argument("--name", type=str,
                                help="Name of experiment. Experiment data will be stored in "
@@ -100,6 +103,12 @@ def main(args=None):
                 print(f"When loading, the following keys were not found: {missing_keys}")
             if len(unexpected_keys) > 0:
                 print(f"When loading, the following keys were not used: {unexpected_keys}")
+
+    # Apply gradient regex
+    if args.gradient_regex is not None:
+        for name, parameter in model.named_parameters():
+            if not re.search(args.gradient_regex, name):
+                parameter.requires_grad = False
 
     # Fit the model
     return model.fit(logger_kwargs=logger_kwargs, fit_kwargs=fit_kwargs)
