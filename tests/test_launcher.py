@@ -91,22 +91,21 @@ def test_list_hparam_append():
 
 
 def test_gradient_regex():
-    with pytest.raises(RuntimeError):
-        main([
-            "model=tests.test_launcher.BasicTrainable",
-            "domain=[-5, 5]",
-            "max_epochs=1",
-            "batch_size=128",
-            "--name", "{model_name};{max_epochs}",
-            # No gradient to any parameter causes gradient-free loss
-            "--gradient-regex", "$^"
-        ])
-
-    main([
+    common_args = [
         "model=tests.test_launcher.BasicTrainable",
         "domain=[-5, 5]",
         "max_epochs=1",
         "batch_size=128",
+        "accelerator='cpu'",
         "--name", "{model_name};{max_epochs}",
+    ]
+
+    with pytest.raises(RuntimeError):
+        main(common_args + [
+            # No gradient to any parameter causes gradient-free loss
+            "--gradient-regex", "$^"
+        ])
+
+    main(common_args + [
         "--gradient-regex", "^model.0.weight"
     ])
