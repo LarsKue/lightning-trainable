@@ -106,9 +106,14 @@ def main(args=None):
 
     # Apply gradient regex
     if args.gradient_regex is not None:
+        deactivated_parameters = remaining_parameters = 0
         for name, parameter in model.named_parameters():
             if not re.search(args.gradient_regex, name):
                 parameter.requires_grad = False
+                deactivated_parameters += 1
+            else:
+                remaining_parameters += 1
+        print(f"Deactivated {deactivated_parameters} parameters, {remaining_parameters} parameters left as is.")
 
     # Fit the model
     return model.fit(logger_kwargs=logger_kwargs, fit_kwargs=fit_kwargs)
