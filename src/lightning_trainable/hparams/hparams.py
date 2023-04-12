@@ -2,6 +2,12 @@ from inspect import isclass
 from types import GenericAlias, UnionType
 from typing import get_origin, Union, get_args
 
+import os
+
+import json
+import tomli
+import yaml
+
 from lightning_trainable.utils import type_name
 
 
@@ -181,6 +187,45 @@ class HParams(dict):
         """ Return names and default values for all optional hparams """
         optional_keys = cls.optional_parameters().keys()
         return {key: getattr(cls, key) for key in optional_keys}
+
+    @classmethod
+    def from_yaml(cls, path: str):
+        """ Load hparams from a YAML file """
+        with open(path, "r") as f:
+            hparams = yaml.safe_load(f)
+
+        return cls(**hparams)
+
+    @classmethod
+    def from_json(cls, path: str):
+        """ Load hparams from a JSON file """
+        with open(path, "r") as f:
+            hparams = json.load(f)
+
+        return cls(**hparams)
+
+    @classmethod
+    def from_toml(cls, path: str):
+        """ Load hparams from a TOML file """
+        with open(path, "rb") as f:
+            hparams = tomli.load(f)
+
+        return cls(**hparams)
+
+    @classmethod
+    def from_file(cls, path: str):
+        """ Load hparams from a file, based on the file extension """
+        ext = os.path.splitext(path)[1]
+
+        match ext:
+            case "yaml":
+                return cls.from_yaml(path)
+            case "json":
+                return cls.from_json(path)
+            case "toml":
+                return cls.from_toml(path)
+            case _:
+                raise NotImplementedError(f"Cannot auto-infer file type from extension {ext!r}.")
 
     def __getattribute__(self, item):
         if item in self:
