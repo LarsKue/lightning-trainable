@@ -328,6 +328,7 @@ class Trainable(lightning.LightningModule):
             See also :func:`~trainable.Trainable.configure_logger`.
         @param trainer_kwargs: Keyword-Arguments to the Lightning Trainer.
             See also :func:`~trainable.Trainable.configure_trainer`.
+        @param fit_kwargs: Keyword-Arguments to the Trainer's fit method.
         @return: Validation Metrics as defined in :func:`~trainable.Trainable.compute_metrics`.
         """
         if logger_kwargs is None:

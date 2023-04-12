@@ -13,10 +13,17 @@ def main(args=None):
     parser = ArgumentParser()
     parser.add_argument("--pycharm-debug", default=False, type=int,
                         help="Port of PyCharm remote debugger to connect to.")
-    parser.add_argument("--start-from", type=Path,
-                        help="Load weights from a specified checkpoint. "
-                             "You must specify at least a `model` config argument. "
-                             "All other config arguments overwrite the values in the stored checkpoint.")
+    resume_group = parser.add_mutually_exclusive_group()
+    resume_group.add_argument("--start-from", type=Path,
+                              help="Load weights from a specified checkpoint. "
+                                   "You must specify at least a `model` config argument. "
+                                   "All other config arguments overwrite the values in the stored checkpoint.")
+    resume_group.add_argument("--continue-from", type=Path,
+                              help="Load the state of model, trainer, optimizer, ... from the given checkpoint "
+                                   "and resume training. "
+                                   "You must specify at least a `model` config argument. "
+                                   "All other config arguments overwrite the values in the stored checkpoint."
+                              )
     parser.add_argument("--loose-load-state-dict", action="store_true", default=False,
                         help="When loading a state dict, set `strict`=False")
     log_dir_group = parser.add_mutually_exclusive_group()
@@ -35,11 +42,17 @@ def main(args=None):
         pydevd_pycharm.settrace('localhost', port=args.pycharm_debug, stdoutToServer=True, stderrToServer=True)
 
     # Merge hparams from checkpoint and configs
+    checkpoint = None
+    fit_kwargs = {}
     if args.start_from is not None:
         checkpoint = torch.load(args.start_from)
-        hparams = checkpoint[LightningModule.CHECKPOINT_HYPER_PARAMS_KEY]
-    else:
+    elif args.continue_from is not None:
+        checkpoint = torch.load(args.continue_from)
+        fit_kwargs["ckpt_path"] = args.continue_from
+    if checkpoint is None:
         hparams = {}
+    else:
+        hparams = checkpoint[LightningModule.CHECKPOINT_HYPER_PARAMS_KEY]
     hparams = parse_config_dict(args.config_args, hparams)
 
     # Set number of threads (potentially move into trainable, but it's a global property)
@@ -77,7 +90,8 @@ def main(args=None):
     from lightning_trainable import Trainable
     assert isinstance(model, Trainable)
 
-    if args.start_from is not None:
+    # Load weights from checkpoint
+    if checkpoint is not None:
         strict = not args.loose_load_state_dict
         keys = model.load_state_dict(checkpoint["state_dict"], strict=strict)
         if not strict:
@@ -88,7 +102,7 @@ def main(args=None):
                 print(f"When loading, the following keys were not used: {unexpected_keys}")
 
     # Fit the model
-    return model.fit(logger_kwargs=logger_kwargs)
+    return model.fit(logger_kwargs=logger_kwargs, fit_kwargs=fit_kwargs)
 
 
 if __name__ == '__main__':
