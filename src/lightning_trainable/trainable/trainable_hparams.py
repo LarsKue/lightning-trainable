@@ -19,5 +19,5 @@ class TrainableHParams(HParams):
     gradient_clip: float | int | None = None
     profiler: str | Profiler | None = None
     num_workers: int = 4
-    pin_memory: bool = True
+    pin_memory: bool | None = None
     early_stopping: int | None = None

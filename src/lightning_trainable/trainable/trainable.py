@@ -225,7 +225,7 @@ class Trainable(lightning.LightningModule):
             dataset=self.train_data,
             batch_size=self.hparams.batch_size,
             shuffle=not isinstance(self.train_data, IterableDataset),
-            pin_memory=self.hparams.pin_memory,
+            pin_memory=auto_pin_memory(self.hparams.pin_memory, self.hparams.accelerator),
             num_workers=self.hparams.num_workers,
         )
 
@@ -241,7 +241,7 @@ class Trainable(lightning.LightningModule):
             dataset=self.val_data,
             batch_size=self.hparams.batch_size,
             shuffle=False,
-            pin_memory=self.hparams.pin_memory,
+            pin_memory=auto_pin_memory(self.hparams.pin_memory, self.hparams.accelerator),
             num_workers=self.hparams.num_workers,
         )
 
@@ -257,7 +257,7 @@ class Trainable(lightning.LightningModule):
             dataset=self.test_data,
             batch_size=self.hparams.batch_size,
             shuffle=False,
-            pin_memory=self.hparams.pin_memory,
+            pin_memory=auto_pin_memory(self.hparams.pin_memory, self.hparams.accelerator),
             num_workers=self.hparams.num_workers,
         )
 
@@ -357,3 +357,9 @@ class Trainable(lightning.LightningModule):
     def load_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "latest", epoch: int | str = "latest", step: int | str = "latest", **kwargs):
         checkpoint = utils.find_checkpoint(root, version, epoch, step)
         return cls.load_from_checkpoint(checkpoint, **kwargs)
+
+
+def auto_pin_memory(pin_memory: bool | None, accelerator: str):
+    if pin_memory is None:
+        return accelerator != "cpu"
+    return pin_memory
