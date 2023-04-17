@@ -9,6 +9,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from itertools import product
 from math import log10
 from pathlib import Path
+from time import sleep
 from typing import Dict, List, Tuple
 from datetime import timedelta
 
@@ -112,7 +113,8 @@ class GridLauncher:
         return configs
 
     def start_runs(self, configs: List[List[Path | str]], num_parallel_runs=None,
-                   num_threads=1, connect_debug: int = None, verbose=False, cli_args=None):
+                   num_threads=1, connect_debug: int = None, verbose=False,
+                   cli_args=None, sleep_while_parallel: float=0.5):
         """
         Starts a number of runs in parallel and returns the futures.
         """
@@ -121,13 +123,16 @@ class GridLauncher:
 
         pool = ThreadPoolExecutor(num_parallel_runs)
         futures = []
-        for config in configs:
+        for i, config in enumerate(configs):
             futures.append(pool.submit(
                 self.run_configuration,
                 config=config, num_threads=num_threads,
                 connect_debug=connect_debug, verbose=verbose,
                 cli_args=cli_args
             ))
+            if i + 1 < num_parallel_runs:
+                # Sleep while runs start immediately to prevent race conditions∆
+                sleep(sleep_while_parallel)
         return pool, futures
 
     def run_configs_and_wait(self,
