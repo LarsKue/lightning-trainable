@@ -124,15 +124,15 @@ class GridLauncher:
         pool = ThreadPoolExecutor(num_parallel_runs)
         futures = []
         for i, config in enumerate(configs):
+            if i + 1 < num_parallel_runs:
+                # Sleep while runs start immediately to prevent race conditions
+                sleep(i * sleep_while_parallel)
             futures.append(pool.submit(
                 self.run_configuration,
                 config=config, num_threads=num_threads,
                 connect_debug=connect_debug, verbose=verbose,
                 cli_args=cli_args
             ))
-            if i + 1 < num_parallel_runs:
-                # Sleep while runs start immediately to prevent race conditions∆
-                sleep(i * sleep_while_parallel)
         return pool, futures
 
     def run_configs_and_wait(self,
