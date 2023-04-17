@@ -132,7 +132,7 @@ class GridLauncher:
             ))
             if i + 1 < num_parallel_runs:
                 # Sleep while runs start immediately to prevent race conditions∆
-                sleep(sleep_while_parallel)
+                sleep(i * sleep_while_parallel)
         return pool, futures
 
     def run_configs_and_wait(self,
