@@ -76,14 +76,15 @@ class GridLauncher:
         """
         Converts a grid of specifications to a list of configurations.
 
-        Each specification can be a list of values to be passed
-        directly to the script or a tuple of a key and a list of values.
+        Each specification can be a value or a list of values to be passed
+        directly to the script or a tuple of a key and a value or a list of values.
 
-        For example:
+        For example, the following code fits a BasicTrainable with the config file
+        specified. The num_threads value is varied over 1, 2 and 4:
         grid_launcher = GridLauncher()
         grid_launcher.grid_spec_to_list([
-            ("model", ["tests.test_launcher.BasicTrainable"]),
-            ["test_launcher_config.yaml"],
+            ("model", "tests.test_launcher.BasicTrainable"),
+            "test_launcher_config.yaml",
             ("num_threads", [1, 2, 4]),
         ])
         """
@@ -102,9 +103,15 @@ class GridLauncher:
                 dict_args.append((fake_key, entry))
         dict_args = dict(dict_args)
 
+        # If a config entry is not a list of values, make it one
+        def ensure_list(value):
+            if isinstance(value, list):
+                return value
+            return [value]
+
         # Create all possible combinations, removing fake keys
         config_keys = list(dict_args.keys())
-        for config_values in product(*dict_args.values()):
+        for config_values in product(*map(ensure_list, dict_args.values())):
             config = [
                 value if key in fake_keys else (key, value)
                 for key, value in zip(config_keys, config_values)
