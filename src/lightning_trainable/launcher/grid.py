@@ -120,7 +120,7 @@ class GridLauncher:
         return configs
 
     def start_runs(self, configs: List[List[Path | str]], num_parallel_runs=None,
-                   num_threads=1, connect_debug: int = None, verbose=False,
+                   num_threads=None, connect_debug: int = None, verbose=False,
                    cli_args=None, sleep_while_parallel: float = 0.5):
         """
         Starts a number of runs in parallel and returns the futures.
@@ -144,7 +144,7 @@ class GridLauncher:
 
     def run_configs_and_wait(self,
                              configs: List[List[Path | str]], num_parallel_runs=None,
-                             num_threads=1, connect_debug: int = None, verbose=False,
+                             num_threads=None, connect_debug: int = None, verbose=False,
                              cli_args=None, sleep_while_parallel: float = 0.5) -> List[RunResult]:
         """
         Runs a list of configurations in parallel and waits for the results.
