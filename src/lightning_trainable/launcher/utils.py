@@ -1,14 +1,16 @@
 from pathlib import Path
-from typing import List, Any, Tuple
+from typing import List, Any, Tuple, Dict
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from yaml import safe_load
 
 
-def parse_config_dict(config_spec: List[Path | str | Tuple[str, Any]], hparams: dict=None):
+def parse_config_dict(config_spec: Dict[str, Any] | List[Path | str | Tuple[str, Any]], hparams: dict=None):
     if hparams is None:
         hparams = {}
+    if isinstance(config_spec, dict):
+        config_spec = config_spec.items()
     for arg in config_spec:
         if isinstance(arg, tuple):
             key, value = arg
