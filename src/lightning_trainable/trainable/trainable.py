@@ -354,7 +354,7 @@ class Trainable(lightning.LightningModule):
         }
 
     @classmethod
-    def load_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "latest", epoch: int | str = "latest", step: int | str = "latest", **kwargs):
+    def load_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "last", epoch: int | str = "last", step: int | str = "last", **kwargs):
         checkpoint = utils.find_checkpoint(root, version, epoch, step)
         return cls.load_from_checkpoint(checkpoint, **kwargs)
 
