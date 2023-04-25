@@ -2,6 +2,8 @@
 from lightning_trainable.hparams import HParams
 from lightning.pytorch.profilers import Profiler
 
+from typing import Any
+
 
 class TrainableHParams(HParams):
     # name of the loss, your `compute_metrics` should return a dict with this name in its keys

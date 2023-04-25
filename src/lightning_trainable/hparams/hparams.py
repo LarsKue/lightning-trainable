@@ -46,13 +46,51 @@ class HParams(dict):
         if not cls.strict_types:
             return
 
-        # check that subclasses do not use generic types
+        # check that subclasses do not use non-supported generic types
         for parameter, T in cls.parameters().items():
-            if isinstance(T, GenericAlias):
-                basic_type = get_origin(T)
-                raise NotImplementedError(f"HParams does not support type checking for generics. "
-                                          f"Use the basic type `{type_name(basic_type)}` instead of `{type_name(T)}` "
-                                          f"for parameter '{parameter}'.")
+            cls._check_is_valid_hint(parameter, T)
+
+    @classmethod
+    def _check_is_valid_hint(cls, parameter, T, recurse=True):
+        """
+        Checks that the given type hint is supported by HParams.
+        Most importantly, this covers checking that no unsupported generic types are used.
+        """
+        basic_type = get_origin(T)
+        type_args = get_args(T)
+
+        if basic_type in [Union, UnionType]:
+            # cover hints like Union[str, list[int]] or str | list[int]
+            for arg in type_args:
+                cls._check_is_valid_hint(parameter, arg, recurse=True)
+            return
+
+        if basic_type is GenericAlias:
+            # cover hints like list[str] or dict[str, int]
+            if not recurse:
+                raise NotImplementedError(f"HParams does not support nested generic types. "
+                                          f"Please use a concrete type for parameter '{parameter}'.")
+            for arg in type_args:
+                cls._check_is_valid_hint(parameter, arg, recurse=False)
+            return
+
+        if type_args:
+            supported_types = [dict, list, tuple]
+            if basic_type in supported_types and recurse:
+                # cover hints like list[int] or dict[str, int]
+                for arg in type_args:
+                    cls._check_is_valid_hint(parameter, arg, recurse=False)
+                return
+
+            # cover hints like MyGeneric[int] or frozenset[int]
+            git_url = "https://github.com/LarsKue/lightning-trainable"
+            raise NotImplementedError(f"HParams does not support generic types for the basic type "
+                                      f"'{basic_type}' of parameter '{parameter}'. "
+                                      f"Please file an issue at {git_url} if you need this feature.")
+
+        # other types are just basic types,
+        # e.g. str, int, float, etc.
+        # so these are fine
 
     @classmethod
     def validate_parameters(cls, hparams: dict) -> dict:
@@ -81,7 +119,8 @@ class HParams(dict):
             typenames = [T.__name__ if hasattr(T, "__name__") else repr(T) for T in types]
             message = "Missing the following required hparams:\n"
             message += "\n".join([
-                f"{i + 1:4d}: '{key}' of type `{type_name(T)}`" for i, (key, T) in enumerate(zip(missing_keys, typenames))
+                f"{i + 1:4d}: '{key}' of type `{type_name(T)}`" for i, (key, T) in
+                enumerate(zip(missing_keys, typenames))
             ])
             raise ValueError(message)
 
@@ -105,13 +144,7 @@ class HParams(dict):
             # check types match
             for key, value in hparams.items():
                 T = all_parameters[key]
-                if T is None:
-                    T = type(None)
-
-                # noinspection PyTypeHints
-                if not isinstance(value, T):
-                    raise TypeError(f"Hparam '{key}' is required to be of type `{type_name(T)}`, "
-                                    f"but got `{value}` of type `{type_name(type(value))}`.")
+                cls._check_type(key, value, T)
 
         return hparams
 
@@ -151,6 +184,77 @@ class HParams(dict):
                 continue
 
             hparams[key] = hparam_type(**value)
+
+    @classmethod
+    def _check_type(cls, key, value, T, recurse=True):
+        """
+        Check that the type of `value` matches the type hint `T`.
+        """
+        if T is None:
+            # allow hinting NoneType as None
+            T = type(None)
+
+        basic_type = get_origin(T)
+        type_args = get_args(T)
+
+        if basic_type in [Union, UnionType]:
+            if any(isinstance(t, GenericAlias) for t in type_args):
+                # cover hints like str | list[int]
+                for arg in type_args:
+                    cls._check_type(key, value, arg, recurse=True)
+                return
+
+        if isinstance(T, GenericAlias):
+            # cover hints like list[int] or dict[str, int]
+            cls._check_generic_type(key, value, T)
+            return
+
+        # noinspection PyTypeHints
+        if not isinstance(value, T):
+            raise TypeError(f"Hparam '{key}' is required to be of type `{type_name(T)}`, "
+                            f"but got `{value}` of type `{type_name(type(value))}`.")
+
+    @staticmethod
+    def _check_generic_type(key, value, T):
+        """
+        Check that the type of `value` matches the type hint `T` for a GenericAlias like list[int].
+        """
+        assert isinstance(T, GenericAlias)
+
+        basic_type = get_origin(T)
+        type_args = get_args(T)
+
+        if not isinstance(value, basic_type):
+            raise TypeError(f"Hparam '{key}' is required to be of base type `{type_name(basic_type)}`, "
+                            f"but got `{value}` of base type `{type_name(get_origin(type(value)))}`.")
+
+        # we already know type(value) is a supported type, since we check this at class creation
+
+        if basic_type is dict:
+            K, V = type_args
+            for k, v in value.items():
+                if not isinstance(k, K):
+                    raise TypeError(f"Dict key '{k}' is required to be of type `{type_name(K)}`, "
+                                    f"but got `{k}` of type `{type_name(type(k))}`.")
+                if not isinstance(v, V):
+                    raise TypeError(f"Dict value '{v}' is required to be of type `{type_name(V)}`, "
+                                    f"but got `{v}` of type `{type_name(type(v))}`.")
+
+        if basic_type is list:
+            V = type_args[0]
+            print(f"{V=}")
+            print(f"{value=}")
+            for v in value:
+                # noinspection PyTypeHints
+                if not isinstance(v, V):
+                    raise TypeError(f"List value '{v}' is required to be of type `{type_name(V)}`, "
+                                    f"but got `{v}` of type `{type_name(type(v))}`.")
+
+        if basic_type is tuple:
+            for i, (v, V) in enumerate(zip(value, type_args)):
+                if not isinstance(v, V):
+                    raise TypeError(f"Tuple value '{v}' is required to be of type `{type_name(V)}`, "
+                                    f"but got `{v}` of type `{type_name(type(v))}`.")
 
     @classmethod
     def parameters(cls) -> dict[str, type]:

@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Generic, Optional, TypeVar, Union
 
 import pytest
 
@@ -195,3 +195,67 @@ def test_migrate():
         NewHParams(some_value=1)
     hparams = NewHParams(old_value=1)
     hparams = NewHParams(value=1)
+
+
+def test_generics():
+    # list
+    class GenericHParams(HParams):
+        value: list[int]
+
+    hparams = GenericHParams(value=[1, 2, 3])
+    assert isinstance(hparams.value, list)
+    assert all(isinstance(item, int) for item in hparams.value)
+    assert hparams.value == [1, 2, 3]
+
+    with pytest.raises(TypeError):
+        # str is not int
+        hparams = GenericHParams(value=[1, 2, "3"])
+
+    # dict
+    class GenericHParams(HParams):
+        value: dict[str, int]
+
+    hparams = GenericHParams(value={"a": 1, "b": 2})
+    assert isinstance(hparams.value, dict)
+    assert all(isinstance(key, str) for key in hparams.value.keys())
+    assert all(isinstance(value, int) for value in hparams.value.values())
+    assert hparams.value == {"a": 1, "b": 2}
+
+    with pytest.raises(TypeError):
+        # str is not int
+        hparams = GenericHParams(value={"a": 1, "b": "2"})
+
+    # tuple
+    class GenericHParams(HParams):
+        value: tuple[int, str]
+
+    hparams = GenericHParams(value=(1, "2"))
+    assert isinstance(hparams.value, tuple)
+    assert isinstance(hparams.value[0], int)
+    assert isinstance(hparams.value[1], str)
+    assert hparams.value == (1, "2")
+
+    with pytest.raises(TypeError):
+        # str is not int
+        hparams = GenericHParams(value=("1", "2"))
+
+    with pytest.raises(TypeError):
+        # int is not str
+        hparams = GenericHParams(value=(1, 2))
+
+
+def test_unsupported_generics():
+    T = TypeVar("T")
+
+    class MyGeneric(Generic[T]):
+        pass
+
+    with pytest.raises(NotImplementedError):
+        class UnsupportedGenericHParams(HParams):
+            value: MyGeneric[int]
+
+
+def test_nested_generics():
+    with pytest.raises(NotImplementedError):
+        class NestedGenericHParams(HParams):
+            value: list[list[int]]

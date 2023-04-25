@@ -11,7 +11,7 @@ from .hparams_module import HParamsModule
 class DenseModuleHParams(HParams):
     inputs: int
     outputs: int
-    layer_widths: list
+    layer_widths: list[int]
     activations: str | list = "relu"
 
     @classmethod
