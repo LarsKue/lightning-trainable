@@ -185,11 +185,12 @@ def test_migrate():
     class NewHParams(HParams):
         value: int
 
-        def __init__(self, **hparams):
+        @classmethod
+        def _migrate_hparams(cls, hparams):
             if "old_value" in hparams:
                 hparams["value"] = hparams["old_value"]
                 del hparams["old_value"]
-            super().__init__(**hparams)
+            return hparams
 
     with pytest.raises(ValueError):
         NewHParams(some_value=1)

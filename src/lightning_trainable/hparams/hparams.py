@@ -97,6 +97,7 @@ class HParams(dict):
         """
         Check given hparams for validity, and fill missing ones with defaults.
 
+        Migrate hparams via cls._migrate_hparams(hparams).
         Convert nested dicts to HParams if specified.
 
         By default, hparams are valid if and only if:
@@ -107,6 +108,8 @@ class HParams(dict):
         """
         required_parameters = cls.required_parameters()
         all_parameters = cls.parameters()
+
+        hparams = cls._migrate_hparams(hparams)
 
         have_keys = set(hparams.keys())
         required_keys = set(required_parameters.keys())
@@ -146,6 +149,10 @@ class HParams(dict):
                 T = all_parameters[key]
                 cls._check_type(key, value, T)
 
+        return hparams
+
+    @classmethod
+    def _migrate_hparams(cls, hparams):
         return hparams
 
     @classmethod
