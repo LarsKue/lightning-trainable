@@ -49,6 +49,8 @@ class MyNetwork(Trainable):
 
 ### 2. Define your model hparams, inheriting from `TrainableHParams`
 
+**New**: You can now use generic type hints in your `HParams`! 
+
 ```python
 from lightning_trainable import TrainableHParams
 
@@ -57,7 +59,7 @@ class MyHParams(TrainableHParams):
     inputs: int = 28 * 28  # MNIST
     outputs: int = 10
 
-    layer_sizes: list
+    layer_sizes: list[int]
     activation: str = "relu"
     dropout: float | int | None = None
 ```
