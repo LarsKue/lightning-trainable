@@ -249,8 +249,6 @@ class HParams(dict):
 
         if basic_type is list:
             V = type_args[0]
-            print(f"{V=}")
-            print(f"{value=}")
             for v in value:
                 # noinspection PyTypeHints
                 if not isinstance(v, V):
