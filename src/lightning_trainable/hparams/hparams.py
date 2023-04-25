@@ -242,23 +242,23 @@ class HParams(dict):
             for k, v in value.items():
                 if not isinstance(k, K):
                     raise TypeError(f"Dict key '{k}' is required to be of type `{type_name(K)}`, "
-                                    f"but got `{k}` of type `{type_name(type(k))}`.")
+                                    f"but got type `{type_name(type(k))}`.")
                 if not isinstance(v, V):
-                    raise TypeError(f"Dict value '{v}' is required to be of type `{type_name(V)}`, "
+                    raise TypeError(f"Dict value for key '{k}' is required to be of type `{type_name(V)}`, "
                                     f"but got `{v}` of type `{type_name(type(v))}`.")
 
         if basic_type is list:
             V = type_args[0]
-            for v in value:
+            for i, v in enumerate(value):
                 # noinspection PyTypeHints
                 if not isinstance(v, V):
-                    raise TypeError(f"List value '{v}' is required to be of type `{type_name(V)}`, "
+                    raise TypeError(f"List value at index {i} is required to be of type `{type_name(V)}`, "
                                     f"but got `{v}` of type `{type_name(type(v))}`.")
 
         if basic_type is tuple:
             for i, (v, V) in enumerate(zip(value, type_args)):
                 if not isinstance(v, V):
-                    raise TypeError(f"Tuple value '{v}' is required to be of type `{type_name(V)}`, "
+                    raise TypeError(f"Tuple value at index {i} is required to be of type `{type_name(V)}`, "
                                     f"but got `{v}` of type `{type_name(type(v))}`.")
 
     @classmethod
