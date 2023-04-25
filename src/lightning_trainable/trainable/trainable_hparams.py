@@ -21,3 +21,9 @@ class TrainableHParams(HParams):
     num_workers: int = 4
     pin_memory: bool | None = None
     early_stopping: int | None = None
+
+    @classmethod
+    def _migrate_hparams(cls, hparams):
+        if "accumulate_batches" in hparams and hparams["accumulate_batches"] is None:
+            hparams["accumulate_batches"] = 1
+        return hparams
