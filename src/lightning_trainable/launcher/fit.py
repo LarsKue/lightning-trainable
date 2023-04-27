@@ -97,6 +97,8 @@ def main(args=None):
     log_dir.mkdir(parents=True, exist_ok=False)
     with open(log_dir / "cli.txt", "w") as f:
         f.write(" ".join(sys.argv))
+    # Overwrite the version for the actual logger
+    logger_kwargs["version"] = logger.version
 
     # No "model" hparam
     module = import_module(module_name)
