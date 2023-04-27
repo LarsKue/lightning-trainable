@@ -6,7 +6,7 @@ from importlib import import_module
 from pathlib import Path
 
 from lightning import LightningModule
-from lightning.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import TensorBoardLogger
 
 from lightning_trainable.launcher.utils import parse_config_dict
 
