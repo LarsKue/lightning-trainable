@@ -1,4 +1,6 @@
+import os
 import re
+import sys
 from argparse import ArgumentParser
 from importlib import import_module
 from pathlib import Path
@@ -84,6 +86,17 @@ def main(args=None):
         )
     else:
         logger_kwargs = dict()
+
+    # Compute the log path and create the directory
+    from pytorch_lightning.loggers import TensorBoardLogger
+    if len(logger_kwargs) == 0:
+        logger = TensorBoardLogger(save_dir=os.getcwd())
+    else:
+        logger = TensorBoardLogger(**logger_kwargs)
+    log_dir = Path(logger.log_dir)
+    log_dir.mkdir(parents=True, exist_ok=False)
+    with open(log_dir / "cli.txt", "w") as f:
+        f.write(" ".join(sys.argv))
 
     # No "model" hparam
     module = import_module(module_name)
