@@ -32,12 +32,12 @@ class AFHQDataset(ImageFolder):
 
         # download the archive
         response = requests.get(self.url, stream=True)
+
         # determine total size of download
         total_size = int(response.headers.get("Content-Length", 0))
 
         with open(archive, "wb") as f:
             it = response.iter_content(chunk_size=self.chunk_size)
-            # it = tqdm(it, total=total_size // self.chunk_size, unit="MiB", unit_scale=False)
             it = tqdm(it, total=total_size, unit="iB", unit_scale=True, unit_divisor=1024)
             for chunk in it:
                 if chunk:
