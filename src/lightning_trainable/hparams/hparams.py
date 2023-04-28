@@ -10,8 +10,10 @@ import yaml
 
 from lightning_trainable.utils import type_name
 
+from .attribute_dict import AttributeDict
 
-class HParams(dict):
+
+class HParams(AttributeDict):
     """
     Wrapper class to handle hparams with defaults, required and optional keys, and optional strict type checks
     Usage:
@@ -39,6 +41,7 @@ class HParams(dict):
     strict_types = True
 
     def __init__(self, **hparams):
+        hparams = AttributeDict(**hparams)
         hparams = self.validate_parameters(hparams)
         super().__init__(**hparams)
 
@@ -93,7 +96,7 @@ class HParams(dict):
         # so these are fine
 
     @classmethod
-    def validate_parameters(cls, hparams: dict) -> dict:
+    def validate_parameters(cls, hparams: AttributeDict) -> AttributeDict:
         """
         Check given hparams for validity, and fill missing ones with defaults.
 
@@ -138,7 +141,7 @@ class HParams(dict):
             raise ValueError(message)
 
         # insert defaults
-        hparams = cls.defaults() | hparams
+        hparams = AttributeDict(**(cls.defaults() | hparams))
 
         # Modify hparams in-place
         cls._convert_dicts(hparams)
@@ -274,7 +277,7 @@ class HParams(dict):
         for c in superclasses:
             if issubclass(c, HParams):
                 # override superclasses with subclasses
-                types = c.parameters() | types
+                types = AttributeDict(**(c.parameters() | types))
 
         return types
 
@@ -283,19 +286,19 @@ class HParams(dict):
         """ Return names and types for all required hparams """
         # parameters that do not have a default value are required
         defaults = dir(cls)
-        return {key: value for key, value in cls.parameters().items() if key not in defaults}
+        return AttributeDict(**{key: value for key, value in cls.parameters().items() if key not in defaults})
 
     @classmethod
     def optional_parameters(cls) -> dict[str, type]:
         """ Return names and types for all optional hparams """
         required = cls.required_parameters()
-        return {key: value for key, value in cls.parameters().items() if key not in required}
+        return AttributeDict(**{key: value for key, value in cls.parameters().items() if key not in required})
 
     @classmethod
     def defaults(cls) -> dict[str, any]:
         """ Return names and default values for all optional hparams """
         optional_keys = cls.optional_parameters().keys()
-        return {key: getattr(cls, key) for key in optional_keys}
+        return AttributeDict(**{key: getattr(cls, key) for key in optional_keys})
 
     @classmethod
     def from_yaml(cls, path: str):
@@ -335,12 +338,3 @@ class HParams(dict):
                 return cls.from_toml(path)
             case _:
                 raise NotImplementedError(f"Cannot auto-infer file type from extension {ext!r}.")
-
-    def __getattribute__(self, item):
-        if item in self:
-            return self[item]
-
-        return super().__getattribute__(item)
-
-    def __setattr__(self, key, value):
-        self[key] = value
