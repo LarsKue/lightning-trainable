@@ -43,6 +43,8 @@ class HParams(AttributeDict):
     def __init__(self, **hparams):
         hparams = AttributeDict(**hparams)
         hparams = self.validate_parameters(hparams)
+        if hparams is None:
+            raise ValueError(f"You must return hparams from `validate_parameters()`.")
         super().__init__(**hparams)
 
     def __init_subclass__(cls):
