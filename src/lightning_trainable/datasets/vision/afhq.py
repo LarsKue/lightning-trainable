@@ -19,7 +19,7 @@ class AFHQDataset(ImageFolder):
         if download:
             self.download()
 
-        super().__init__(os.path.join(root, split), **kwargs)
+        super().__init__(os.path.join(root, self.dirname, split), **kwargs)
 
     def download(self):
         archive = os.path.join(self.root, self.filename)
@@ -27,6 +27,7 @@ class AFHQDataset(ImageFolder):
 
         if os.path.isdir(target):
             print(f"Found existing dataset, skipping download.")
+            return
 
         print(f"Downloading {self.__class__.__name__} to {archive}.")
 
