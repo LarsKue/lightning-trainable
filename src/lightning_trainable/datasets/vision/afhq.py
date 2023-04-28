@@ -1,8 +1,14 @@
 
 import os
 import requests
+
+import torch
+import torch.nn.functional as F
+
+from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import extract_archive
+
 from tqdm import tqdm
 
 
@@ -14,10 +20,23 @@ class AFHQDataset(ImageFolder):
     chunk_size = 1024 * 1024
     _remove_finished = True
 
+    default_transform = transforms.Compose([
+        transforms.RandomResizedCrop(256, scale=(0.75, 1.0)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+    ])
+
+    default_target_transform = transforms.Compose([
+        transforms.Lambda(lambda label: F.one_hot(torch.tensor(label), num_classes=3))
+    ])
+
     def __init__(self, root: str, split: str = "train", download: bool = True, **kwargs):
         self.root = root
         if download:
             self.download()
+
+        kwargs.setdefault("transform", self.default_transform)
+        kwargs.setdefault("target_transform", self.default_target_transform)
 
         super().__init__(os.path.join(root, self.dirname, split), **kwargs)
 
