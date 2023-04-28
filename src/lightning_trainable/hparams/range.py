@@ -26,3 +26,6 @@ class Range:
                 return self.lower <= instance <= self.upper
             case other:
                 raise NotImplementedError(f"Unrecognized exclude option: {other}")
+
+    def __repr__(self):
+        return f"Range({self.lower}, {self.upper}, exclude={self.exclude})"

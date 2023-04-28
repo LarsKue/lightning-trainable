@@ -14,3 +14,6 @@ class Choice:
 
     def __instancecheck__(self, instance):
         return instance in self.choices
+
+    def __repr__(self):
+        return f"Choice({', '.join(repr(c) for c in self.choices)})"
