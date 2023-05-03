@@ -68,7 +68,7 @@ def test_fit_start_from():
         batch_size=128,
         accelerator="cpu"
     ))
-    ckpt_name = "test_lancer.ckpt"
+    ckpt_name = "test_launcher.ckpt"
     trainer = model.configure_trainer()
     trainer.fit(model)
     trainer.save_checkpoint(ckpt_name)
@@ -80,6 +80,8 @@ def test_fit_start_from():
         "--name", "{model_name};{max_epochs}",
         "--start-from", ckpt_name
     ])
+
+    # TODO: use pytest resources for the checkpoint file
 
 
 def test_list_hparam_append():
