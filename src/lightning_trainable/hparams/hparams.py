@@ -221,12 +221,6 @@ class HParams(AttributeDict):
             cls._check_generic_type(key, value, T)
             return
 
-        print(basic_type)
-        print(type_args)
-        print(T)
-        if type_args:
-            print(type_args[1])
-
         # noinspection PyTypeHints
         if not isinstance(value, T):
             raise TypeError(f"Hparam '{key}' is required to be of type `{type_name(T)}`, "
