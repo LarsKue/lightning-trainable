@@ -134,3 +134,6 @@ dmypy.json
 # plots
 figures/
 *.png
+
+# quick tests
+playground.py
