@@ -159,6 +159,28 @@ def test_choice():
     with pytest.raises(TypeError):
         hparams = ChoiceHParams(value="asdf")
 
+    class UnionTypeChoiceHParams(HParams):
+        value: int | Choice("x", "y")
+
+    class _(HParams):
+        # constructing this class between defining UnionTypeChoiceHParams and using it
+        # should not affect the behavior of UnionTypeChoiceHParams
+        unrelated: int | Choice("a", "b")
+
+    hparams = UnionTypeChoiceHParams(value="x")
+    assert isinstance(hparams.value, str)
+    assert hparams.value == "x"
+
+    hparams = UnionTypeChoiceHParams(value=1)
+    assert isinstance(hparams.value, int)
+    assert hparams.value == 1
+
+    with pytest.raises(TypeError):
+        hparams = UnionTypeChoiceHParams(value="z")
+
+    with pytest.raises(TypeError):
+        hparams = UnionTypeChoiceHParams(value=1.0)
+
 
 def test_range():
     class RangeHParams(HParams):
@@ -179,6 +201,28 @@ def test_range():
     with pytest.raises(TypeError):
         # we exclude upper, so this should raise
         hparams = RangeHParams(value=1.0)
+
+    class UnionTypeRangeHParams(HParams):
+        value: str | Range(0.0, 1.0)
+
+    class _(HParams):
+        # constructing this class between defining UnionTypeRangeHParams and using it
+        # should not affect the behavior of UnionTypeRangeHParams
+        unrelated: int | Range(-1.0, 0.0)
+
+    hparams = UnionTypeRangeHParams(value="x")
+    assert isinstance(hparams.value, str)
+    assert hparams.value == "x"
+
+    hparams = UnionTypeRangeHParams(value=0.5)
+    assert isinstance(hparams.value, float)
+    assert hparams.value == 0.5
+
+    with pytest.raises(TypeError):
+        hparams = UnionTypeRangeHParams(value=1.5)
+
+    with pytest.raises(TypeError):
+        hparams = UnionTypeRangeHParams(value=-0.5)
 
 
 def test_migrate():
