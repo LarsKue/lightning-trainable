@@ -1,4 +1,3 @@
 
-from .choice import Choice
 from .hparams import HParams
-from .range import Range
+from .types import Choice, Range

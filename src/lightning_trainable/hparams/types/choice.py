@@ -1,5 +1,8 @@
 
-class Choice:
+from .hparam_type import HParamType
+
+
+class Choice(HParamType):
     """
     One of several choices
     Usage:

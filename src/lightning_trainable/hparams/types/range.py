@@ -1,5 +1,8 @@
 
-class Range:
+from .hparam_type import HParamType
+
+
+class Range(HParamType):
     """
     A float within a given range. Not to be confused with the built-in range.
     Usage:
