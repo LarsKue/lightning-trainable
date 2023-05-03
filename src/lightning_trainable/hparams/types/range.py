@@ -1,22 +1,6 @@
 
-from .hparam_type import HParamType
 
-
-class Range(HParamType):
-    """
-    A float within a given range. Not to be confused with the built-in range.
-    Usage:
-    class MyHParams(HParams):
-        value: Range(0.0, 1.0, exclude="upper")
-
-    hparams = MyHParams(value=0.5)
-    assert hparams.value == 0.5
-    """
-    def __init__(self, lower: float | int, upper: float | int, exclude: str | None = None):
-        self.lower = lower
-        self.upper = upper
-        self.exclude = exclude
-
+class RangeMeta(type):
     def __instancecheck__(self, instance):
         match self.exclude:
             case "lower":
@@ -30,5 +14,22 @@ class Range(HParamType):
             case other:
                 raise NotImplementedError(f"Unrecognized exclude option: {other}")
 
-    def __repr__(self):
-        return f"Range({self.lower}, {self.upper}, exclude={self.exclude})"
+    def __call__(cls, lower: float | int, upper: float | int, exclude: str | None = None):
+        # dynamically construct a new class with the given choices
+        name = f"Range({lower!r}, {upper!r}, exclude={exclude!r})"
+        bases = (Range,)
+        namespace = {"lower": lower, "upper": upper, "exclude": exclude}
+        return type(name, bases, namespace)
+
+
+class Range(metaclass=RangeMeta):
+    """
+    A float within a given range. Not to be confused with the built-in range.
+    Usage:
+    class MyHParams(HParams):
+        value: Range(0.0, 1.0, exclude="upper")
+
+    hparams = MyHParams(value=0.5)
+    assert hparams.value == 0.5
+    """
+    pass

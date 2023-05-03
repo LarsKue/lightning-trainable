@@ -1,8 +1,18 @@
 
-from .hparam_type import HParamType
+
+class ChoiceMeta(type):
+    def __instancecheck__(self, instance):
+        return instance in self.choices
+
+    def __call__(cls, *choices):
+        # dynamically construct a new class with the given choices
+        name = f"Choice{choices!r}"
+        bases = (Choice,)
+        namespace = {"choices": choices}
+        return type(name, bases, namespace)
 
 
-class Choice(HParamType):
+class Choice(metaclass=ChoiceMeta):
     """
     One of several choices
     Usage:
@@ -12,11 +22,4 @@ class Choice(HParamType):
     hparams = MyHParams(value="asdf")
     assert hparams.value == "asdf"
     """
-    def __init__(self, *choices):
-        self.choices = choices
-
-    def __instancecheck__(self, instance):
-        return instance in self.choices
-
-    def __repr__(self):
-        return f"Choice({', '.join(repr(c) for c in self.choices)})"
+    pass

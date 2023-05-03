@@ -198,7 +198,7 @@ class HParams(AttributeDict):
             hparams[key] = hparam_type(**value)
 
     @classmethod
-    def _check_type(cls, key, value, T, recurse=True):
+    def _check_type(cls, key, value, T):
         """
         Check that the type of `value` matches the type hint `T`.
         """
@@ -213,13 +213,19 @@ class HParams(AttributeDict):
             if any(isinstance(t, GenericAlias) for t in type_args):
                 # cover hints like str | list[int]
                 for arg in type_args:
-                    cls._check_type(key, value, arg, recurse=True)
+                    cls._check_type(key, value, arg)
                 return
 
         if isinstance(T, GenericAlias):
             # cover hints like list[int] or dict[str, int]
             cls._check_generic_type(key, value, T)
             return
+
+        print(basic_type)
+        print(type_args)
+        print(T)
+        if type_args:
+            print(type_args[1])
 
         # noinspection PyTypeHints
         if not isinstance(value, T):
