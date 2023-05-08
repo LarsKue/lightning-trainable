@@ -138,7 +138,8 @@ def find_epoch_step(root: str | Path, epoch: int = "last", step: int = "last") -
     return epoch, step
 
 
-def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", epoch: int = "last", step: int = "last") -> str:
+def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last",
+                    epoch: int = "last", step: int = "last") -> str:
     """
     Helper method to find a lightning checkpoint based on version, epoch and step numbers.
 

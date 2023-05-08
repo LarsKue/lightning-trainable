@@ -6,7 +6,7 @@ from urllib.request import Request, urlopen
 from yaml import safe_load
 
 
-def parse_config_dict(config_spec: Dict[str, Any] | List[Path | str | Tuple[str, Any]], hparams: dict=None):
+def parse_config_dict(config_spec: Dict[str, Any] | List[Path | str | Tuple[str, Any]], hparams: dict = None):
     if hparams is None:
         hparams = {}
     if isinstance(config_spec, dict):
@@ -55,6 +55,7 @@ def dict_list_set(dl: dict | list, item, value):
             dl[int(item)] = value
     else:
         dl[item] = value
+
 
 def send_telegram_message(message: str, token: str, chats: List[int]):
     try:
