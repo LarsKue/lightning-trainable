@@ -1,18 +1,16 @@
 import os
-from copy import deepcopy
 import pathlib
+from copy import deepcopy
 
 import lightning
-
+import torch
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ProgressBar, EarlyStopping
 from lightning.pytorch.loggers import Logger, TensorBoardLogger
-
-import torch
 from torch.utils.data import DataLoader, Dataset, IterableDataset
+from tqdm import tqdm
 
 from lightning_trainable import utils
 from lightning_trainable.callbacks import EpochProgressBar
-
 from .trainable_hparams import TrainableHParams
 
 
@@ -266,7 +264,7 @@ class Trainable(lightning.LightningModule):
         Instantiate the Logger used by the Trainer in module fitting.
         By default, we use a TensorBoardLogger, but you can use any other logger of your choice.
 
-        @param root_dir: The root directory in which all your experiments with
+        @param save_dir: The root directory in which all your experiments with
             different names and versions will be stored.
         @param kwargs: Keyword-Arguments to the Logger.
         @return: The Logger object.
@@ -292,8 +290,9 @@ class Trainable(lightning.LightningModule):
         if trainer_kwargs is None:
             trainer_kwargs = dict()
 
-        if "enable_progress_bar" not in trainer_kwargs and any(isinstance(callback, ProgressBar) for callback in self.configure_callbacks()):
-            trainer_kwargs["enable_progress_bar"] = False
+        if "enable_progress_bar" not in trainer_kwargs:
+            if any(isinstance(callback, ProgressBar) for callback in self.configure_callbacks()):
+                trainer_kwargs["enable_progress_bar"] = False
 
         return lightning.Trainer(
             accelerator=self.hparams.accelerator.lower(),
@@ -353,8 +352,39 @@ class Trainable(lightning.LightningModule):
             if any(key.startswith(key) for key in ["training/", "validation/"])
         }
 
+    @torch.enable_grad()
+    def fit_fast(self, device="cuda"):
+        """
+        Perform a fast fit using only a simple torch loop.
+        This is useful for prototyping, especially with small models.
+        Note that this uses minimal features, so LRSchedulers, logging,
+        lightning callbacks and other features are not available.
+
+        Performs no validation loop. Returns the final training loss.
+
+        Use at your own risk. You should switch to the full fit() function once you are done prototyping.
+        """
+        self.train()
+        self.to(device)
+
+        optimizer = self.configure_optimizers()["optimizer"]
+        dataloader = self.train_dataloader()
+
+        loss = None
+        for _epoch in tqdm(range(self.hparams.max_epochs)):
+            for batch_idx, batch in enumerate(dataloader):
+                batch = tuple(t.to(device) for t in batch if torch.is_tensor(t))
+
+                optimizer.zero_grad()
+                loss = self.training_step(batch, 0)
+                loss.backward()
+                optimizer.step()
+
+        return loss
+
     @classmethod
-    def load_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "last", epoch: int | str = "last", step: int | str = "last", **kwargs):
+    def load_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "last",
+                        epoch: int | str = "last", step: int | str = "last", **kwargs):
         checkpoint = utils.find_checkpoint(root, version, epoch, step)
         return cls.load_from_checkpoint(checkpoint, **kwargs)
 

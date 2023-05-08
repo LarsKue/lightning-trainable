@@ -31,29 +31,33 @@ classifiers = [
 ]
 
 dependencies = [
+    # pytorch
     "torch ~= 2.0",
     "torchvision ~= 0.15",
+    # lightning
     "lightning ~= 2.0",
     "tensorboard ~= 2.12",
-    "Pillow ~= 9.4",
+    # io
+    "tomli ~= 2.0",
+    "pyyaml ~= 6.0",
+    # other
 ]
 
 [project.optional-dependencies]
 tests = [
+    # linting
     "flake8 ~= 6.0",
     "flake8-pyproject ~= 1.2",
+    # tests
     "pytest ~= 7.2",
     "pytest-cov ~= 4.0",
+    # other
     "numpy ~= 1.24",
     "matplotlib ~= 3.7",
 ]
 
-benchmarks = [
-    "pandas ~= 1.5",
-    "tqdm ~= 4.64",
-]
-
 experiments = [
+    # these are just recommended packages to run experiments
     "numpy ~= 1.24",
     "matplotlib ~= 3.7",
     "jupyterlab ~= 3.6",
