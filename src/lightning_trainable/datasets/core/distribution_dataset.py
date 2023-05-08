@@ -15,11 +15,17 @@ class DistributionDataset(IterableDataset):
         self.max_samples = max_samples
 
     def __iter__(self):
+        if self.max_samples is None:
+            return DistributionSampler(self.distribution)
+
         return DistributionSampler(self.distribution, len(self))
 
     def __len__(self):
+        if self.max_samples is None:
+            raise NotImplementedError(f"Infinite {self.__class__.__name__} has no length.")
+
         worker_info = get_worker_info()
-        if self.max_samples is None or worker_info is None:
+        if worker_info is None:
             # single-process data loading
             return self.max_samples
         else:

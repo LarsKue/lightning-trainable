@@ -14,9 +14,12 @@ class JointDataset(Dataset):
 
 class JointIterableDataset(IterableDataset):
     """ Iterable Dataset version of JointDataset """
-    def __init__(self, *datasets: Dataset):
+    def __init__(self, *datasets: IterableDataset):
         super().__init__()
         self.datasets = datasets
 
     def __iter__(self):
         return zip(*self.datasets)
+
+    def __len__(self):
+        return min(len(ds) for ds in self.datasets)
