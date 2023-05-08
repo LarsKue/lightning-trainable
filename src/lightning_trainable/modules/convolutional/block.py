@@ -3,9 +3,9 @@ import torch.nn as nn
 
 from itertools import chain
 
-from lightning_trainable.modules import HParamsModule
 from lightning_trainable.utils import get_activation
 
+from ..hparams_module import HParamsModule
 from .block_hparams import ConvolutionalBlockHParams
 
 

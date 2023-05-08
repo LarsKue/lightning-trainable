@@ -4,8 +4,8 @@ import torch.nn as nn
 import math
 
 from lightning_trainable.hparams import AttributeDict
-from lightning_trainable.modules import HParamsModule
 
+from ..hparams_module import HParamsModule
 from ..fully_connected import FullyConnectedNetwork
 from ..convolutional import ConvolutionalBlock
 from .hparams import UNetHParams

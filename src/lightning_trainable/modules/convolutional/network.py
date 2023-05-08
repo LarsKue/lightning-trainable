@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from lightning_trainable.modules import HParamsModule
 
+from ..hparams_module import HParamsModule
 from ..sequential_mixin import SequentialMixin
 
 from .block import ConvolutionalBlock

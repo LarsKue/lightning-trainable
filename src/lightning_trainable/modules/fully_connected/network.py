@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
 
-from lightning_trainable.modules import HParamsModule
 from lightning_trainable.utils import get_activation
 
+from ..hparams_module import HParamsModule
 from ..sequential_mixin import SequentialMixin
-
 from .hparams import FullyConnectedNetworkHParams
 
 
@@ -24,13 +23,12 @@ class FullyConnectedNetwork(SequentialMixin, HParamsModule):
         return self.network(x)
 
     def configure_network(self):
+        layers = []
         widths = [self.hparams.input_dims, *self.hparams.layer_widths, self.hparams.output_dims]
 
         if self.hparams.input_dims == "lazy":
             widths = widths[1:]
             layers = [nn.LazyLinear(widths[0]), get_activation(self.hparams.activation)(inplace=True)]
-        else:
-            layers = []
 
         for (w1, w2) in zip(widths[:-1], widths[1:]):
             layers.append(nn.Linear(w1, w2))
