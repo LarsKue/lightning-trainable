@@ -2,12 +2,13 @@
 
 ![Build status](https://github.com/LarsKue/lightning-trainable/workflows/Tests/badge.svg)
 
-A light-weight trainable module for `pytorch-lightning`, aimed at fast prototyping.
+A light-weight trainable module for `pytorch-lightning`, aimed at fast prototyping,
+particularly for generative models.
 
 This package is intended to further simplify the definition of your `LightningModules`
 such that you only need to define a network, hyperparameters, and train metrics.
 
-It also provides some default datasets that you can benchmark your models on.
+It also provides some default datasets and module building blocks.
 
 ## Install
 Clone the repository
@@ -22,29 +23,39 @@ and then use `pip` to install it in editable mode:
 ### 1. Define your module and datasets, inheriting from `Trainable`:
 
 ```python
-from lightning_trainable import Trainable, utils
+import torch.nn.functional as F
+from lightning_trainable.trainable import Trainable
+from lightning_trainable.modules import FullyConnectedNetwork
+from lightning_trainable.metrics import accuracy
 
 
-class MyNetwork(Trainable):
-    hparams: MyHParams  # only if you use custom hparams
+class MyClassifier(Trainable):
+    # specify your hparams class
+    hparams: MyClassifierHParams
     
-    def __init__(self, hparams):
-        super().__init__(hparams)
-        self.network = utils.make_dense(
-            [self.hparams.inputs, *self.hparams.layer_sizes, self.hparams.outputs],
-            self.hparams.activation
-        )
-        self.train_data = TensorDataset(...)
-        self.val_data = TensorDataset(...)
+    def __init__(self, hparams, **datasets):
+        super().__init__(hparams, **datasets)
+        self.network = FullyConnectedNetwork(self.hparams.network_hparams)
 
     def compute_metrics(self, batch, batch_idx):
+        # Compute loss and analysis metrics on a batch
         x, y = batch
         yhat = self.network(x)
-        mse = F.mse_loss(yhat, y)
+        
+        cross_entropy = F.cross_entropy(yhat, y)
+        top1_accuracy = accuracy(yhat, y, k=1)
+        
+        metrics = {
+            "loss": cross_entropy,
+            "cross_entropy": cross_entropy,
+            "top1_accuracy": top1_accuracy,
+        }
+        
+        if self.hparams.network_hparams.output_size > 5:
+            # only log top-5 accuracy if it can be computed
+            metrics["top5_accuracy"] = accuracy(yhat, y, k=5)
 
-        return dict(
-            loss=mse
-        )
+        return metrics
 ```
 
 ### 2. Define your model hparams, inheriting from `TrainableHParams`
@@ -52,34 +63,33 @@ class MyNetwork(Trainable):
 **New**: You can now use generic type hints in your `HParams`! 
 
 ```python
-from lightning_trainable import TrainableHParams
+from lightning_trainable.trainable import TrainableHParams
+from lightning_trainable.modules import FullyConnectedNetworkHParams
 
 
-class MyHParams(TrainableHParams):
-    inputs: int = 28 * 28  # MNIST
-    outputs: int = 10
-
-    layer_sizes: list[int]
-    activation: str = "relu"
-    dropout: float | int | None = None
+class MyClassifierHParams(TrainableHParams):
+    network_hparams: FullyConnectedNetworkHParams
 ```
 
 ### 3. Train your model with `model.fit()`
 ```python
-hparams = MyHParams(
+hparams = MyClassifierHParams(
     layer_sizes=[32, 64, 32],
     max_epochs=10,
     batch_size=32,
 )
 
-model = MyNetwork(hparams)
+model = MyClassifier(hparams)
 model.fit()
 ```
 
 
-### Now your model can train with automatic metrics logging, hparams logging and checkpointing!
+### Done! Now your model can train with automatic metrics logging, hparams logging and checkpointing!
 
-To look at metrics, use `tensorboard --logdir lightning_logs/`.
+To look at metrics, use [Tensorboard](https://www.tensorflow.org/tensorboard), e.g. from the Terminal:
+```
+tensorboard --logdir lightning_logs/
+```
 
 To load a model checkpoint, use
 
@@ -108,6 +118,26 @@ For example, you can create an infinite, iterable dataset from a generative dist
 from lightning_trainable.datasets import *
 
 dataset = HypershellsDataset()
+```
+
+## Modules
+We also provide a collection of modules that you can use to build your models,
+e.g. `FullyConnectedNetwork` or `UNet`.
+Modules come with pre-packaged `HParams` classes that you can use to configure them.
+
+For example, you can create a fully-connected network like this:
+
+```python
+from lightning_trainable.modules import FullyConnectedNetwork
+
+hparams = dict(
+    input_dims=28 * 28,
+    output_dims=10,
+    layer_widths=[1024, 512, 256, 128],
+    activation="relu",
+)
+
+network = FullyConnectedNetwork(hparams)
 ```
 
 ## Experiment Launcher
