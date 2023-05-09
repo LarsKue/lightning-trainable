@@ -2,6 +2,8 @@ from lightning_trainable.hparams import HParams, Choice
 
 
 class UNetBlockHParams(HParams):
+    # this is a reduced variant of the ConvolutionalBlockHParams
+    # where additional parameters are generated automatically by UNet
     channels: list[int]
     kernel_sizes: list[int]
 

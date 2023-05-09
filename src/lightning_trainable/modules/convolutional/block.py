@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
 
-from itertools import chain
-
-from lightning_trainable.utils import get_activation
+import lightning_trainable.utils as utils
 
 from ..hparams_module import HParamsModule
+
 from .block_hparams import ConvolutionalBlockHParams
 
 
@@ -44,11 +43,10 @@ class ConvolutionalBlock(HParamsModule):
 
         # construct activations
         activations = []
-        for _ in range(len(self.hparams.channels) - 1):
-            activations.append(get_activation(self.hparams.activation)(inplace=True))
+        for _ in range(len(self.hparams.channels) - 2):
+            activations.append(utils.get_activation(self.hparams.activation)(inplace=True))
 
-        # zip longest
-        layers = list(chain.from_iterable(zip(convolutions, activations)))
+        layers = list(utils.zip(convolutions, activations, exhaustive=True, nested=False))
 
         # add pooling layer if requested
         if self.hparams.pool:

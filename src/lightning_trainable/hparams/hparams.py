@@ -8,9 +8,8 @@ import json
 import tomli
 import yaml
 
-from lightning_trainable.utils import type_name
-
 from .attribute_dict import AttributeDict
+from .type_name import type_name
 
 
 class HParams(AttributeDict):

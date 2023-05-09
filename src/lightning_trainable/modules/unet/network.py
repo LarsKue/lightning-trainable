@@ -5,9 +5,10 @@ import math
 
 from lightning_trainable.hparams import AttributeDict
 
-from ..hparams_module import HParamsModule
-from ..fully_connected import FullyConnectedNetwork
 from ..convolutional import ConvolutionalBlock
+from ..fully_connected import FullyConnectedNetwork
+from ..hparams_module import HParamsModule
+
 from .hparams import UNetHParams
 from .skip_connection import SkipConnection
 from .temporary_flatten import TemporaryFlatten
