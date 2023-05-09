@@ -393,6 +393,7 @@ class Trainable(lightning.LightningModule):
         """ Optimize the HParams with ray[tune] """
         try:
             from ray import tune
+            import os
         except ModuleNotFoundError:
             raise ModuleNotFoundError(f"Please install lightning-trainable[experiments] to use `optimize_hparams`.")
 
@@ -400,11 +401,14 @@ class Trainable(lightning.LightningModule):
             model_kwargs = dict()
         if tune_kwargs is None:
             tune_kwargs = dict()
+            
+        path = os.getcwd()
 
         def train(hparams):
+            os.chdir(path)
             model = cls(hparams, **model_kwargs)
             model.fit(
-                logger_kwargs=dict(save_dir=tune.get_trial_dir()),
+                logger_kwargs=dict(save_dir=str(tune.get_trial_dir())),
                 trainer_kwargs=dict(enable_progress_bar=False)
             )
 
@@ -424,12 +428,12 @@ class Trainable(lightning.LightningModule):
         reporter = tune.JupyterNotebookReporter(
             overwrite=True,
             parameter_columns=list(hparams.keys()),
-            metric_columns=[f"training/{cls.hparams.loss}", f"validation/{cls.hparams.loss}"],
+            metric_columns=[f"training/{cls.hparams_type.loss}", f"validation/{cls.hparams_type.loss}"],
         )
 
         analysis = tune.run(
             train,
-            metric=f"validation/{cls.hparams.loss}",
+            metric=f"validation/{cls.hparams_type.loss}",
             mode="min",
             config=hparams,
             scheduler=scheduler,
