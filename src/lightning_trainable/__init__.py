@@ -5,5 +5,4 @@ from . import modules
 from . import trainable
 from . import utils
 
-from .trainable import Trainable, TrainableHParams, SkipBatch
-from .hparams import HParams
+from .trainable import Trainable, TrainableHParams
