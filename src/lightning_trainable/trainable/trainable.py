@@ -376,7 +376,7 @@ class Trainable(lightning.LightningModule):
                 batch = tuple(t.to(device) for t in batch if torch.is_tensor(t))
 
                 optimizer.zero_grad()
-                loss = self.training_step(batch, 0)
+                loss = self.training_step(batch, batch_idx)
                 loss.backward()
                 optimizer.step()
 
@@ -387,6 +387,57 @@ class Trainable(lightning.LightningModule):
                         epoch: int | str = "last", step: int | str = "last", **kwargs):
         checkpoint = utils.find_checkpoint(root, version, epoch, step)
         return cls.load_from_checkpoint(checkpoint, **kwargs)
+
+    @classmethod
+    def optimize_hparams(cls, hparams: dict, scheduler: str = "asha", model_kwargs: dict = None, tune_kwargs: dict = None):
+        """ Optimize the HParams with ray[tune] """
+        try:
+            from ray import tune
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(f"Please install lightning-trainable[experiments] to use `optimize_hparams`.")
+
+        if model_kwargs is None:
+            model_kwargs = dict()
+        if tune_kwargs is None:
+            tune_kwargs = dict()
+
+        def train(hparams):
+            model = cls(hparams, **model_kwargs)
+            model.fit(
+                logger_kwargs=dict(save_dir=tune.get_trial_dir()),
+                trainer_kwargs=dict(enable_progress_bar=False)
+            )
+
+            return model
+
+        match scheduler:
+            case "asha":
+                scheduler = tune.schedulers.AsyncHyperBandScheduler(
+                    time_attr="time_total_s",
+                    max_t=600,
+                    grace_period=180,
+                    reduction_factor=4,
+                )
+            case other:
+                raise NotImplementedError(f"Unrecognized scheduler: '{other}'")
+
+        reporter = tune.JupyterNotebookReporter(
+            overwrite=True,
+            parameter_columns=list(hparams.keys()),
+            metric_columns=[f"training/{cls.hparams.loss}", f"validation/{cls.hparams.loss}"],
+        )
+
+        analysis = tune.run(
+            train,
+            metric=f"validation/{cls.hparams.loss}",
+            mode="min",
+            config=hparams,
+            scheduler=scheduler,
+            progress_reporter=reporter,
+            **tune_kwargs
+        )
+
+        return analysis
 
 
 def auto_pin_memory(pin_memory: bool | None, accelerator: str):
