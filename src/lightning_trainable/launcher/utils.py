@@ -39,7 +39,7 @@ def parse_config_dict(config_spec: Dict[str, Any] | List[Path | str | Tuple[str,
                 try:
                     hparam_level = dict_list_get(hparam_level, key_entry)
                 except (KeyError, IndexError) as e:
-                    raise e.__class__(f"Key path {key_path[:i + 1]!r} not found.") from e
+                    raise e.__class__(f"Key path {'.'.join(key_path[:i + 1])!r} not found.") from e
             dict_list_set(hparam_level, key_path[-1], value)
     return hparams
 
