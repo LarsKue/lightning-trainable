@@ -104,7 +104,7 @@ class Trainable(lightning.LightningModule):
                         kwargs = dict(
                             max_lr=optimizer.defaults["lr"],
                             epochs=self.hparams.max_epochs,
-                            steps_per_epoch=len(self.train_dataloader())
+                            steps_per_epoch=len(self.train_dataloader()) // self.hparams.accumulate_batches,
                         )
                         interval = "step"
                     case _:
