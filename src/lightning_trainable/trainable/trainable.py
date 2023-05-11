@@ -13,6 +13,9 @@ from lightning_trainable import utils
 from lightning_trainable.callbacks import EpochProgressBar
 from .trainable_hparams import TrainableHParams
 
+from . import lr_schedulers
+from . import optimizers
+
 
 class SkipBatch(Exception):
     pass
@@ -87,95 +90,18 @@ class Trainable(lightning.LightningModule):
             self.log(f"test/{key}", value,
                      prog_bar=key == self.hparams.loss)
 
-    def configure_lr_schedulers(self, optimizer):
-        """
-        Configure the LR Scheduler as defined in HParams.
-        By default, we only use a single LR Scheduler, attached to a single optimizer.
-        You can use a ChainedScheduler if you need multiple LR Schedulers throughout training,
-        or override this method if you need different schedulers for different parameters.
-
-        @param optimizer: The optimizer to attach the scheduler to.
-        @return: The LR Scheduler object.
-        """
-        match self.hparams.lr_scheduler:
-            case str() as name:
-                match name.lower():
-                    case "onecyclelr":
-                        kwargs = dict(
-                            max_lr=optimizer.defaults["lr"],
-                            epochs=self.hparams.max_epochs,
-                            steps_per_epoch=len(self.train_dataloader()) // self.hparams.accumulate_batches,
-                        )
-                        interval = "step"
-                    case _:
-                        kwargs = dict()
-                        interval = "step"
-                scheduler = utils.get_scheduler(name)(optimizer, **kwargs)
-                return dict(
-                    scheduler=scheduler,
-                    interval=interval,
-                )
-            case dict() as kwargs:
-                # Copy the dict so we don't modify the original
-                kwargs = deepcopy(kwargs)
-
-                name = kwargs.pop("name")
-                interval = "step"
-                if "interval" in kwargs:
-                    interval = kwargs.pop("interval")
-                scheduler = utils.get_scheduler(name)(optimizer, **kwargs)
-                return dict(
-                    scheduler=scheduler,
-                    interval=interval,
-                )
-            case type(torch.optim.lr_scheduler.LRScheduler) as Scheduler:
-                kwargs = dict()
-                interval = "step"
-                scheduler = Scheduler(optimizer, **kwargs)
-                return dict(
-                    scheduler=scheduler,
-                    interval=interval,
-                )
-            case (torch.optim.lr_scheduler.LRScheduler() | torch.optim.lr_scheduler.ReduceLROnPlateau()) as scheduler:
-                return dict(
-                    scheduler=scheduler,
-                    interval="step",
-                )
-            case None:
-                # do not use a scheduler
-                return None
-            case other:
-                raise NotImplementedError(f"Unrecognized Scheduler: {other}")
-
     def configure_optimizers(self):
         """
-        Configure Optimizer and LR Scheduler objects as defined in HParams.
-        By default, we only use a single optimizer and an optional LR Scheduler.
-        If you need multiple optimizers, override this method.
+        Configure the optimizer and learning rate scheduler for this model, based on the HParams.
+        This method is called automatically by the Lightning Trainer in module fitting.
 
-        @return: A dictionary containing the optimizer and lr_scheduler.
+        By default, we use one optimizer and zero or one learning rate scheduler.
+        If you want to use multiple optimizers or learning rate schedulers, you must override this method.
+
+        @return: A dictionary containing the optimizer and learning rate scheduler, if any.
         """
-        kwargs = dict()
-
-        match self.hparams.optimizer:
-            case str() as name:
-                optimizer = utils.get_optimizer(name)(self.parameters(), **kwargs)
-            case dict() as kwargs:
-                # Copy the dict so we don't modify the original
-                kwargs = deepcopy(kwargs)
-
-                name = kwargs.pop("name")
-                optimizer = utils.get_optimizer(name)(self.parameters(), **kwargs)
-            case type(torch.optim.Optimizer) as Optimizer:
-                optimizer = Optimizer(self.parameters(), **kwargs)
-            case torch.optim.Optimizer() as optimizer:
-                pass
-            case None:
-                return None
-            case other:
-                raise NotImplementedError(f"Unrecognized Optimizer: {other}")
-
-        lr_scheduler = self.configure_lr_schedulers(optimizer)
+        optimizer = optimizers.configure(self)
+        lr_scheduler = lr_schedulers.configure(self, optimizer)
 
         if lr_scheduler is None:
             return optimizer

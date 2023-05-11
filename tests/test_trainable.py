@@ -30,7 +30,7 @@ def test_simple_model():
         accelerator="cpu",
         max_epochs=10,
         batch_size=32,
-        lr_scheduler="onecyclelr"
+        lr_scheduler="OneCycleLR"
     )
     model = SimpleTrainable(hparams, train_data=train_data)
     model.fit()
@@ -56,7 +56,7 @@ def test_double_train():
         max_epochs=1,
         batch_size=8,
         optimizer=dict(
-            name="adam",
+            name="Adam",
             lr=1e-3,
         )
     )
