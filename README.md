@@ -74,9 +74,12 @@ class MyClassifierHParams(TrainableHParams):
 ### 3. Train your model with `model.fit()`
 ```python
 hparams = MyClassifierHParams(
-    layer_sizes=[32, 64, 32],
-    max_epochs=10,
-    batch_size=32,
+    network_hparams=dict(
+        input_dims=28 * 28,
+        output_dims=10,
+        layer_widths=[1024, 512, 256, 128],
+        activation="relu",
+    ),
 )
 
 model = MyClassifier(hparams)
