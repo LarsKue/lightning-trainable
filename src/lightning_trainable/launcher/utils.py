@@ -35,8 +35,11 @@ def parse_config_dict(config_spec: Dict[str, Any] | List[Path | str | Tuple[str,
         for key, value in new_hparams.items():
             hparam_level = hparams
             key_path = key.split(".")
-            for key_entry in key_path[:-1]:
-                hparam_level = dict_list_get(hparam_level, key_entry)
+            for i, key_entry in enumerate(key_path[:-1]):
+                try:
+                    hparam_level = dict_list_get(hparam_level, key_entry)
+                except (KeyError, IndexError) as e:
+                    raise e.__class__(f"Key path {'.'.join(key_path[:i + 1])!r} not found.") from e
             dict_list_set(hparam_level, key_path[-1], value)
     return hparams
 
