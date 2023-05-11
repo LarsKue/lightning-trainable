@@ -1,3 +1,4 @@
+from .deprecate import deprecate
 from .io import find_checkpoint
 from .iteration import flatten, zip
 from .modules import (
