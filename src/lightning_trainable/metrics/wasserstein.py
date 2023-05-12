@@ -1,14 +1,9 @@
 
 import torch
+from torch import Tensor
 
 
-def wasserstein(
-        x: torch.Tensor,
-        y: torch.Tensor,
-        cost: torch.Tensor = None,
-        epsilon: int | float = 0.1,
-        steps: int = 100
-) -> torch.Tensor:
+def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: int | float = 0.1, steps: int = 100) -> Tensor:
     """
     Compute the Wasserstein distance between two distributions.
     @param x: Samples from the first distribution.
