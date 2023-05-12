@@ -5,7 +5,7 @@ import torch
 from torch import Tensor
 
 
-def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 100) -> Tensor:
+def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 10) -> Tensor:
     """
     Computes the Sinkhorn optimal transport plan from sample weights of two distributions.
     @param a: Sample weights from the first distribution in shape (n,)
@@ -36,7 +36,7 @@ def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 10
     return u[:, None] * gain * v[None, :]
 
 
-def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = None, steps: int = 100) -> Tensor:
+def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = None, steps: int = 10) -> Tensor:
     """
     Computes the Sinkhorn optimal transport plan from samples from two distributions.
     See also: <cref>sinkhorn</cref>
@@ -66,7 +66,7 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = No
     return sinkhorn(a, b, cost, epsilon, steps)
 
 
-def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = 0.1, steps: int = 100) -> Tensor:
+def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = 0.1, steps: int = 10) -> Tensor:
     """
     Computes the Wasserstein distance between two distributions.
     See also: <cref>sinkhorn_auto</cref>
