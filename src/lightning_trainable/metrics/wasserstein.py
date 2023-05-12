@@ -42,8 +42,10 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = No
     See also: <cref>sinkhorn</cref>
     @param x: Samples from the first distribution in shape (n, ...).
     @param y: Samples from the second distribution in shape (m, ...).
-    @param cost: Optional cost matrix in shape (n, m). If not provided, the Euclidean distance is used.
-    @param epsilon: Entropic regularization parameter.
+    @param cost: Optional cost matrix in shape (n, m).
+        If not provided, the Euclidean distance is used.
+    @param epsilon: Optional entropic regularization parameter.
+        If not provided, the half-mean of the cost matrix is used.
     @param steps: Number of iterations.
     """
     if x.shape[1:] != y.shape[1:]:
@@ -55,8 +57,7 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = No
         cost = torch.linalg.norm(cost, dim=-1)
 
     if epsilon is None:
-        # this converges to 1 for normally distributed data
-        epsilon = 0.5 * cost.mean() ** 2 / x[0].numel()
+        epsilon = cost.mean() / 2
 
     # Initialize the sample weights.
     a = torch.ones(len(x)) / len(x)
