@@ -55,7 +55,7 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = No
         cost = torch.linalg.norm(cost, dim=-1)
 
     if epsilon is None:
-        epsilon = torch.quantile(cost, 0.1).item()
+        epsilon = 0.5 * cost.mean() ** 2 / x[0].numel()
 
     # Initialize the sample weights.
     a = torch.ones(len(x)) / len(x)
