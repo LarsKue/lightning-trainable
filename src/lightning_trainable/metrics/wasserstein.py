@@ -55,6 +55,7 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = No
         cost = torch.linalg.norm(cost, dim=-1)
 
     if epsilon is None:
+        # this converges to 1 for normally distributed data
         epsilon = 0.5 * cost.mean() ** 2 / x[0].numel()
 
     # Initialize the sample weights.
