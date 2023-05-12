@@ -1,9 +1,11 @@
 
+import warnings
+
 import torch
 from torch import Tensor
 
 
-def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float = 0.1, steps: int = 100) -> Tensor:
+def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 100) -> Tensor:
     """
     Computes the Sinkhorn optimal transport plan from sample weights of two distributions.
     @param a: Sample weights from the first distribution in shape (n,)
@@ -16,6 +18,10 @@ def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float = 0.1, steps: in
         raise ValueError(f"Expected cost to have shape {(len(a), len(b))}, but got {cost.shape}.")
 
     gain = torch.exp(-cost / epsilon)
+
+    if gain.mean() < 1e-30:
+        warnings.warn(f"Detected low bandwidth ({epsilon:.1e}) relative to cost ({cost.mean().item():.1e}). "
+                      f"You may experience numerical instabilities. Consider increasing epsilon.")
 
     # Initialize the dual variables.
     u = torch.ones(len(a))
@@ -30,7 +36,7 @@ def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float = 0.1, steps: in
     return u[:, None] * gain * v[None, :]
 
 
-def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = 0.1, steps: int = 100) -> Tensor:
+def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = None, steps: int = 100) -> Tensor:
     """
     Computes the Sinkhorn optimal transport plan from samples from two distributions.
     See also: <cref>sinkhorn</cref>
@@ -47,6 +53,9 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = 0.
         cost = x[:, None] - y[None, :]
         cost = torch.flatten(cost, start_dim=2)
         cost = torch.linalg.norm(cost, dim=-1)
+
+    if epsilon is None:
+        epsilon = torch.quantile(cost, 0.1).item()
 
     # Initialize the sample weights.
     a = torch.ones(len(x)) / len(x)
