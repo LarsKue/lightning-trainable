@@ -3,9 +3,9 @@ import torch
 from torch import Tensor
 
 
-def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: int | float = 0.1, steps: int = 100) -> Tensor:
+def plan(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: int | float = 0.1, steps: int = 100) -> Tensor:
     """
-    Compute the Wasserstein distance between two distributions.
+    Compute the optimal transport plan pi between two distributions.
     @param x: Samples from the first distribution.
     @param y: Samples from the second distribution.
     @param cost: Optional cost matrix. If not provided, the L2 distance is used.
@@ -29,6 +29,17 @@ def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: int | float 
         u = epsilon * torch.logsumexp(-cost + v[None, :] / epsilon, dim=1)
         v = epsilon * torch.logsumexp(-cost + u[:, None] / epsilon, dim=0)
 
-    w = torch.sum(u * torch.sum(cost * torch.exp(-(u[:, None] + v[None, :]) / epsilon), dim=1), dim=0)
+    pi = torch.exp(-(cost + u[:, None] + v[None, :]) / epsilon)
+
+    return pi
+
+
+def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: int | float = 0.1, steps: int = 100) -> Tensor:
+    """
+    Compute the Wasserstein distance between two distributions. See <cref>plan</cref> for parameter descriptions.
+    """
+    pi = plan(x, y, cost, epsilon, steps)
+
+    w = torch.sum(pi * cost)
 
     return w
