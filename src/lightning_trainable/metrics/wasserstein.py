@@ -24,8 +24,8 @@ def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 10
                       f"You may experience numerical instabilities. Consider increasing epsilon.")
 
     # Initialize the dual variables.
-    u = torch.ones(len(a))
-    v = torch.ones(len(b))
+    u = torch.ones(len(a), dtype=a.dtype, device=a.device)
+    v = torch.ones(len(b), dtype=b.dtype, device=b.device)
 
     # Compute the Sinkhorn iterations.
     for _ in range(steps):
@@ -60,8 +60,8 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = No
         epsilon = cost.mean() / 2
 
     # Initialize the sample weights.
-    a = torch.ones(len(x)) / len(x)
-    b = torch.ones(len(y)) / len(y)
+    a = torch.ones(len(x), dtype=x.dtype, device=x.device) / len(x)
+    b = torch.ones(len(y), dtype=y.dtype, device=y.device) / len(y)
 
     return sinkhorn(a, b, cost, epsilon, steps)
 
@@ -71,4 +71,5 @@ def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = 0.1,
     Computes the Wasserstein distance between two distributions.
     See also: <cref>sinkhorn_auto</cref>
     """
+    # TODO: fix for cost = None
     return torch.sum(sinkhorn_auto(x, y, cost, epsilon, steps) * cost)
