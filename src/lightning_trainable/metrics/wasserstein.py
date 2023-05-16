@@ -8,6 +8,8 @@ from torch import Tensor
 def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 10) -> Tensor:
     """
     Computes the Sinkhorn optimal transport plan from sample weights of two distributions.
+    This version does not use log-space computations, but allows for zero or negative weights.
+
     @param a: Sample weights from the first distribution in shape (n,)
     @param b: Sample weights from the second distribution in shape (m,)
     @param cost: Cost matrix in shape (n, m).
@@ -36,10 +38,42 @@ def sinkhorn(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 10
     return u[:, None] * gain * v[None, :]
 
 
+def sinkhorn_log(a: Tensor, b: Tensor, cost: Tensor, epsilon: float, steps: int = 10) -> Tensor:
+    """
+    Computes the Sinkhorn optimal transport plan from sample weights of two distributions.
+    This version uses log-space computations to avoid numerical instabilities, but disallows zero or negative weights.
+
+    @param a: Sample weights from the first distribution in shape (n,)
+    @param b: Sample weights from the second distribution in shape (m,)
+    @param cost: Cost matrix in shape (n, m).
+    @param epsilon: Entropic regularization parameter.
+    @param steps: Number of iterations.
+    """
+    if torch.any(a <= 0) or torch.any(b <= 0):
+        raise ValueError("Expected sample weights to be non-negative.")
+    if cost.shape != (len(a), len(b)):
+        raise ValueError(f"Expected cost to have shape {(len(a), len(b))}, but got {cost.shape}.")
+
+    log_gain = -cost / epsilon
+
+    # Initialize the dual variables.
+    log_u = torch.zeros(len(a), dtype=a.dtype, device=a.device)
+    log_v = torch.zeros(len(b), dtype=b.dtype, device=b.device)
+
+    # Compute the Sinkhorn iterations.
+    for _ in range(steps):
+        log_v = torch.log(b) - torch.logsumexp(log_gain + log_u[:, None], dim=0)
+        log_u = torch.log(a) - torch.logsumexp(log_gain + log_v[None, :], dim=1)
+
+    # Return the transport plan.
+    return torch.exp(log_u[:, None] + log_gain + log_v[None, :])
+
+
 def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = None, steps: int = 10) -> Tensor:
     """
     Computes the Sinkhorn optimal transport plan from samples from two distributions.
-    See also: <cref>sinkhorn</cref>
+    See also: <cref>sinkhorn_log</cref>
+
     @param x: Samples from the first distribution in shape (n, ...).
     @param y: Samples from the second distribution in shape (m, ...).
     @param cost: Optional cost matrix in shape (n, m).
@@ -63,7 +97,7 @@ def sinkhorn_auto(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = No
     a = torch.ones(len(x), dtype=x.dtype, device=x.device) / len(x)
     b = torch.ones(len(y), dtype=y.dtype, device=y.device) / len(y)
 
-    return sinkhorn(a, b, cost, epsilon, steps)
+    return sinkhorn_log(a, b, cost, epsilon, steps)
 
 
 def wasserstein(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = 0.1, steps: int = 10) -> Tensor:
