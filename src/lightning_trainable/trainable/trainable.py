@@ -123,10 +123,12 @@ class Trainable(lightning.LightningModule):
                 interval = "step"
                 if "interval" in kwargs:
                     interval = kwargs.pop("interval")
+                config_kwargs = kwargs.pop("config", dict())
                 scheduler = utils.get_scheduler(name)(optimizer, **kwargs)
                 return dict(
                     scheduler=scheduler,
                     interval=interval,
+                    **config_kwargs
                 )
             case type(torch.optim.lr_scheduler.LRScheduler) as Scheduler:
                 kwargs = dict()
