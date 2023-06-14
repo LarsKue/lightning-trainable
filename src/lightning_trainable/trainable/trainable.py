@@ -4,13 +4,12 @@ from copy import deepcopy
 
 import lightning
 import torch
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ProgressBar, EarlyStopping
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
 from lightning.pytorch.loggers import Logger, TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset, IterableDataset
 from tqdm import tqdm
 
 from lightning_trainable import utils
-from lightning_trainable.callbacks import EpochProgressBar
 from .trainable_hparams import TrainableHParams
 
 from . import lr_schedulers
@@ -42,7 +41,10 @@ class Trainable(lightning.LightningModule):
         self.test_data = test_data
 
     def __init_subclass__(cls, **kwargs):
-        cls.hparams_type = cls.__annotations__.get("hparams", TrainableHParams)
+        hparams_type = cls.__annotations__.get("hparams")
+        if hparams_type is not None:
+            # only overwrite hparams_type if it is defined by the child class
+            cls.hparams_type = hparams_type
 
     def compute_metrics(self, batch, batch_idx) -> dict:
         """
@@ -131,7 +133,6 @@ class Trainable(lightning.LightningModule):
                 save_top_k=5
             ),
             LearningRateMonitor(),
-            EpochProgressBar(),
         ]
         if self.hparams.early_stopping is not None:
             callbacks.append(EarlyStopping(monitor, patience=self.hparams.early_stopping))
@@ -215,10 +216,6 @@ class Trainable(lightning.LightningModule):
             logger_kwargs = dict()
         if trainer_kwargs is None:
             trainer_kwargs = dict()
-
-        if "enable_progress_bar" not in trainer_kwargs:
-            if any(isinstance(callback, ProgressBar) for callback in self.configure_callbacks()):
-                trainer_kwargs["enable_progress_bar"] = False
 
         return lightning.Trainer(
             accelerator=self.hparams.accelerator.lower(),
