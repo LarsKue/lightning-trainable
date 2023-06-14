@@ -1,6 +1,5 @@
 import os
 import pathlib
-from copy import deepcopy
 
 import lightning
 import torch
