@@ -35,6 +35,8 @@ def test_simple_model():
     model = SimpleTrainable(hparams, train_data=train_data)
     model.fit()
 
+    model.load_checkpoint()
+
 
 def test_double_train():
     class SimpleTrainable(Trainable):
