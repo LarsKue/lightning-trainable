@@ -197,22 +197,22 @@ class Trainable(lightning.LightningModule):
 
         @return: A list of train callbacks.
         """
+        checkpoint_kwargs = deepcopy(self.hparams.model_checkpoint)
         if self.val_data is None:
             monitor = f"training/{self.hparams.loss}"
         else:
             monitor = f"validation/{self.hparams.loss}"
+        if "monitor" in checkpoint_kwargs and checkpoint_kwargs["monitor"] == "auto":
+            checkpoint_kwargs["monitor"] = monitor
         callbacks = [
-            ModelCheckpoint(
-                monitor=monitor,
-                save_last=True,
-                every_n_epochs=25,
-                save_top_k=5
-            ),
+            ModelCheckpoint(**checkpoint_kwargs),
             LearningRateMonitor(),
             EpochProgressBar(),
         ]
         if self.hparams.early_stopping is not None:
-            callbacks.append(EarlyStopping(monitor, patience=self.hparams.early_stopping))
+            if self.hparams.early_stopping["monitor"] == "auto":
+                self.hparams.early_stopping["monitor"] = monitor
+            callbacks.append(EarlyStopping(**self.hparams.early_stopping))
         return callbacks
 
     def train_dataloader(self) -> DataLoader | list[DataLoader]:
