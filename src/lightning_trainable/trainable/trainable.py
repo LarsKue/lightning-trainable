@@ -270,7 +270,7 @@ class Trainable(lightning.LightningModule):
 
         @param save_dir: The root directory in which all your experiments with
             different names and versions will be stored.
-        @param kwargs: Keyword-Arguments to the Logger.
+        @param kwargs: Keyword-Arguments to the Logger. Set `logger_name` to use a different logger than TensorBoardLogger.
         @return: The Logger object.
         """
         logger_kwargs = deepcopy(kwargs)
