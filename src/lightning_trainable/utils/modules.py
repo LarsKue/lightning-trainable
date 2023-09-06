@@ -58,6 +58,7 @@ def get_module(name):
 
 
 def get_logger(name):
+    """ Get a logger in a case-insensitive way """
     return find_class(
         name, lightning.pytorch.loggers,
         lightning.pytorch.loggers.Logger

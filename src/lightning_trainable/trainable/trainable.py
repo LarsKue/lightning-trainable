@@ -276,11 +276,13 @@ class Trainable(lightning.LightningModule):
         logger_kwargs = deepcopy(kwargs)
         logger_kwargs.update(dict(
             save_dir=save_dir,
-            default_hp_metric=False,
         ))
-        logger_name = logger_kwargs.pop("name", "tensorboardlogger")
+        logger_name = logger_kwargs.pop("logger_name", "TensorBoardLogger")
+        logger_class = utils.get_logger(logger_name)
+        if issubclass(logger_class, TensorBoardLogger):
+            logger_kwargs["default_hp_metric"] = False
 
-        return utils.get_logger(logger_name)(
+        return logger_class(
             **logger_kwargs
         )
 
