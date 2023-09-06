@@ -273,10 +273,15 @@ class Trainable(lightning.LightningModule):
         @param kwargs: Keyword-Arguments to the Logger.
         @return: The Logger object.
         """
-        return TensorBoardLogger(
+        logger_kwargs = deepcopy(kwargs)
+        logger_kwargs.update(dict(
             save_dir=save_dir,
             default_hp_metric=False,
-            **kwargs
+        ))
+        logger_name = logger_kwargs.pop("name", "tensorboardlogger")
+
+        return utils.get_logger(logger_name)(
+            **logger_kwargs
         )
 
     def configure_trainer(self, logger_kwargs: dict = None, trainer_kwargs: dict = None) -> lightning.Trainer:

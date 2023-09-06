@@ -5,4 +5,5 @@ from .modules import (
     get_module,
     get_optimizer,
     get_scheduler,
+    get_logger
 )
