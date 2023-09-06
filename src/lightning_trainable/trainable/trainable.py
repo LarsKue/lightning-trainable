@@ -270,13 +270,20 @@ class Trainable(lightning.LightningModule):
 
         @param save_dir: The root directory in which all your experiments with
             different names and versions will be stored.
-        @param kwargs: Keyword-Arguments to the Logger.
+        @param kwargs: Keyword-Arguments to the Logger. Set `logger_name` to use a different logger than TensorBoardLogger.
         @return: The Logger object.
         """
-        return TensorBoardLogger(
+        logger_kwargs = deepcopy(kwargs)
+        logger_kwargs.update(dict(
             save_dir=save_dir,
-            default_hp_metric=False,
-            **kwargs
+        ))
+        logger_name = logger_kwargs.pop("logger_name", "TensorBoardLogger")
+        logger_class = utils.get_logger(logger_name)
+        if issubclass(logger_class, TensorBoardLogger):
+            logger_kwargs["default_hp_metric"] = False
+
+        return logger_class(
+            **logger_kwargs
         )
 
     def configure_trainer(self, logger_kwargs: dict = None, trainer_kwargs: dict = None) -> lightning.Trainer:
