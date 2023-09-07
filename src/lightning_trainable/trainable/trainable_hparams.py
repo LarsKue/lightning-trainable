@@ -1,10 +1,7 @@
 
-import warnings
-
 from lightning_trainable.hparams import HParams
 from lightning.pytorch.profilers import Profiler
 from lightning_trainable.utils import deprecate
-
 
 
 class TrainableHParams(HParams):

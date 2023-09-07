@@ -20,6 +20,11 @@ class UNet(HParamsModule):
     def __init__(self, hparams: dict | UNetHParams):
         super().__init__(hparams)
 
+        self.down_blocks = nn.ModuleList()
+        self.up_blocks = nn.ModuleList()
+        self.levels = nn.ModuleList()
+        self.fc = None
+
         self.network = self.configure_network(
             input_shape=self.hparams.input_shape,
             output_shape=self.hparams.output_shape,
@@ -35,10 +40,14 @@ class UNet(HParamsModule):
         Recursively configures the levels of the UNet.
         """
         if not down_blocks:
-            return self.configure_fc(input_shape, output_shape)
+            self.fc = self.configure_fc(input_shape, output_shape)
+            return self.fc
 
         down_block = down_blocks[0]
         up_block = up_blocks[-1]
+
+        down_channels = [input_shape[0], *down_block["channels"]]
+        up_channels = [*up_block["channels"], output_shape[0]]
 
         down_hparams = AttributeDict(
             channels=[input_shape[0], *down_block["channels"]],
@@ -63,10 +72,14 @@ class UNet(HParamsModule):
         next_output_shape = (up_hparams.channels[0], output_shape[1] // 2, output_shape[2] // 2)
 
         if self.hparams.skip_mode == "concat":
+            up_channels[0] += down_channels[-1]
             up_hparams.channels[0] += down_hparams.channels[-1]
 
         down_block = ConvolutionalBlock(down_hparams)
         up_block = ConvolutionalBlock(up_hparams)
+
+        self.down_blocks.append(down_block)
+        self.up_blocks.append(up_block)
 
         next_level = self.configure_levels(
             input_shape=next_input_shape,
@@ -75,11 +88,41 @@ class UNet(HParamsModule):
             up_blocks=up_blocks[:-1],
         )
 
-        return nn.Sequential(
+        level = nn.Sequential(
             down_block,
             SkipConnection(next_level, mode=self.hparams.skip_mode),
             up_block,
         )
+
+        self.levels.append(level)
+
+        return level
+
+    def configure_down_block(self, channels, kernel_sizes):
+        hparams = AttributeDict(
+            channels=channels,
+            kernel_sizes=kernel_sizes,
+            activation=self.hparams.activation,
+            padding="same",
+            pool=True,
+            pool_direction="down",
+            pool_position="last"
+        )
+
+        return ConvolutionalBlock(hparams)
+
+    def configure_up_block(self, channels, kernel_sizes):
+        hparams = AttributeDict(
+            channels=channels,
+            kernel_sizes=kernel_sizes,
+            activation=self.hparams.activation,
+            padding="same",
+            pool=True,
+            pool_direction="up",
+            pool_position="first"
+        )
+
+        return ConvolutionalBlock(hparams)
 
     def configure_fc(self, input_shape: (int, int, int), output_shape: (int, int, int)):
         """
