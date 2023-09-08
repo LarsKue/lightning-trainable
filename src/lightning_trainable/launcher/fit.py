@@ -6,6 +6,7 @@ from importlib import import_module
 from pathlib import Path
 from time import sleep
 
+import yaml
 from lightning import LightningModule
 from lightning.pytorch.loggers import TensorBoardLogger
 
@@ -29,6 +30,8 @@ def main(args=None):
                                    "You must specify at least a `model` config argument. "
                                    "All other config arguments overwrite the values in the stored checkpoint."
                               )
+    parser.add_argument("--trainer-kwargs", type=yaml.safe_load, default={},
+                        help="Pass kwargs to the trainer.")
     parser.add_argument("--loose-load-state-dict", action="store_true", default=False,
                         help="When loading a state dict, set `strict`=False")
     parser.add_argument("--gradient-regex", type=str, default=None,
@@ -139,7 +142,7 @@ def main(args=None):
         print(f"Deactivated {deactivated_parameters} parameters, {remaining_parameters} parameters left as is.")
 
     # Fit the model
-    return model.fit(logger_kwargs=logger_kwargs, fit_kwargs=fit_kwargs)
+    return model.fit(logger_kwargs=logger_kwargs, fit_kwargs=fit_kwargs, trainer_kwargs=args.trainer_kwargs)
 
 
 if __name__ == '__main__':
