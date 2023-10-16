@@ -23,8 +23,10 @@ def dummy_hparams_cls():
     class DummyHParams(TrainableHParams):
         max_epochs: int = 10
         batch_size: int = 4
+        accelerator: str = "cpu"
 
     return DummyHParams
+
 
 @pytest.fixture
 def dummy_hparams(dummy_hparams_cls):
@@ -62,7 +64,7 @@ def test_fit(dummy_model):
 
 
 def test_fit_fast(dummy_model):
-    loss = dummy_model.fit_fast()
+    loss = dummy_model.fit_fast(device="cpu")
 
     assert torch.isclose(loss, torch.tensor(0.0))
 
