@@ -1,4 +1,6 @@
-import torch
+
+from torch import Tensor
+
 import torch.nn as nn
 
 from lightning_trainable.utils import get_activation
@@ -19,7 +21,7 @@ class FullyConnectedNetwork(SequentialMixin, HParamsModule):
 
         self.network = self.configure_network()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return self.network(x)
 
     def configure_network(self):

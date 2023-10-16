@@ -291,7 +291,14 @@ class Trainable(lightning.LightningModule):
         self.train()
         self.to(device)
 
-        optimizer = self.configure_optimizers()["optimizer"]
+        maybe_optimizer = self.configure_optimizers()
+        if isinstance(maybe_optimizer, dict):
+            optimizer = maybe_optimizer["optimizer"]
+        elif isinstance(maybe_optimizer, torch.optim.Optimizer):
+            optimizer = maybe_optimizer
+        else:
+            raise RuntimeError("Invalid optimizer")
+
         dataloader = self.train_dataloader()
 
         loss = None
