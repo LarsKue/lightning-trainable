@@ -9,8 +9,6 @@ from lightning_trainable.launcher.fit import main
 from lightning_trainable.launcher.grid import GridLauncher, status_count_counter
 from lightning_trainable.launcher.utils import parse_config_dict
 
-# TODO: tempdir
-
 
 class BasicTrainableHParams(TrainableHParams):
     domain: list
