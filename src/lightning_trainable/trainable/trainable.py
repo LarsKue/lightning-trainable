@@ -1,8 +1,9 @@
+import lightning
 import os
 import pathlib
-
-import lightning
 import torch
+
+from copy import deepcopy
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
 from lightning.pytorch.loggers import Logger, TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset, IterableDataset
@@ -34,8 +35,6 @@ class Trainable(lightning.LightningModule):
         if not isinstance(hparams, self.hparams_type):
             hparams = self.hparams_type(**hparams)
         self.save_hyperparameters(hparams)
-        # workaround for https://github.com/Lightning-AI/lightning/issues/17889
-        self._hparams_name = "hparams"
 
         self.train_data = train_data
         self.val_data = val_data

@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset
 
-from lightning_trainable.trainable import Trainable
+from lightning_trainable.trainable import Trainable, TrainableHParams
 
 
 @pytest.fixture
@@ -19,16 +19,23 @@ def dummy_network():
 
 
 @pytest.fixture
-def dummy_hparams():
-    return dict(
-        max_epochs=10,
-        batch_size=4,
-    )
+def dummy_hparams_cls():
+    class DummyHParams(TrainableHParams):
+        max_epochs: int = 10
+        batch_size: int = 4
+
+    return DummyHParams
+
+@pytest.fixture
+def dummy_hparams(dummy_hparams_cls):
+    return dummy_hparams_cls()
 
 
 @pytest.fixture
-def dummy_model_cls(dummy_network, dummy_dataset):
+def dummy_model_cls(dummy_network, dummy_dataset, dummy_hparams_cls):
     class DummyModel(Trainable):
+        hparams: dummy_hparams_cls
+
         def __init__(self, hparams):
             super().__init__(hparams, train_data=dummy_dataset, val_data=dummy_dataset, test_data=dummy_dataset)
             self.network = dummy_network
@@ -71,3 +78,28 @@ def test_hparams_invariant(dummy_model_cls, dummy_hparams):
     dummy_model1.fit()
 
     assert hparams == dummy_hparams
+
+
+def test_checkpoint(dummy_model):
+    dummy_model.fit()
+
+    trained_model = dummy_model.load_checkpoint()
+
+
+def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
+
+    class MyHParams(dummy_hparams_cls):
+        pass
+
+    class MyModel(dummy_model_cls):
+        def __init__(self, hparams):
+            super().__init__(hparams)
+
+    hparams = MyHParams()
+    model = MyModel(hparams)
+
+    assert model._hparams_name == "hparams"
+
+    model.fit()
+
+    model.load_checkpoint()
