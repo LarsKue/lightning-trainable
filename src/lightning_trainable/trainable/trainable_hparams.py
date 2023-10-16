@@ -21,7 +21,13 @@ class TrainableHParams(HParams):
     profiler: str | Profiler | None = None
     num_workers: int = 4
     pin_memory: bool | None = None
-    early_stopping: int | None = None
+    early_stopping: dict | None = None
+    model_checkpoint: dict | None = dict(
+        monitor="auto",
+        save_last=True,
+        every_n_epochs=25,
+        save_top_k=5
+    )
 
     @classmethod
     def _migrate_hparams(cls, hparams):
@@ -57,4 +63,6 @@ class TrainableHParams(HParams):
                     if name == "onecyclelr":
                         hparams["lr_scheduler"]["name"] = "OneCycleLR"
 
+        if "early_stopping" in hparams and isinstance(hparams["early_stopping"], int):
+            hparams["early_stopping"] = dict(monitor="auto", patience=hparams["early_stopping"])
         return hparams

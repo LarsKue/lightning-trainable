@@ -57,7 +57,10 @@ def dict_list_set(dl: dict | list, item, value):
         else:
             dl[int(item)] = value
     else:
-        dl[item] = value
+        if item == "!":
+            dl.update(value)
+        else:
+            dl[item] = value
 
 
 def send_telegram_message(message: str, token: str, chats: List[int]):

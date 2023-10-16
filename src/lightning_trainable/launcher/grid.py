@@ -94,6 +94,8 @@ class GridLauncher:
 
         # Create fake keys for non-tuple entries
         dict_args = []
+        if isinstance(config_spec, dict):
+            config_spec = config_spec.items()
         for entry in config_spec:
             if isinstance(entry, tuple):
                 dict_args.append(entry)
@@ -121,7 +123,7 @@ class GridLauncher:
 
     def start_runs(self, configs: List[List[Path | str]], num_parallel_runs=None,
                    num_threads=None, connect_debug: int = None, verbose=False,
-                   cli_args=None, sleep_while_parallel: float = 0.5):
+                   cli_args=None, sleep_while_parallel: float = 0.0):
         """
         Starts a number of runs in parallel and returns the futures.
         """
@@ -148,7 +150,7 @@ class GridLauncher:
     def run_configs_and_wait(self,
                              configs: List[List[Path | str]], num_parallel_runs=None,
                              num_threads=None, connect_debug: int = None, verbose=False,
-                             cli_args=None, sleep_while_parallel: float = 0.5) -> List[RunResult]:
+                             cli_args=None, sleep_while_parallel: float = 0.0) -> List[RunResult]:
         """
         Runs a list of configurations in parallel and waits for the results.
         """
