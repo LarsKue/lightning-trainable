@@ -62,6 +62,10 @@ class Trainable(lightning.LightningModule):
         """
         raise NotImplementedError
 
+    def on_train_start(self):
+        # TODO: get metrics to track from compute_metrics
+        self.logger.log_hyperparams(self.hparams, ...)
+
     def training_step(self, batch, batch_idx):
         try:
             metrics = self.compute_metrics(batch, batch_idx)
@@ -186,28 +190,22 @@ class Trainable(lightning.LightningModule):
             num_workers=self.hparams.num_workers,
         )
 
-    def configure_logger(self, save_dir=os.getcwd(), **kwargs) -> Logger:
+    def configure_logger(self, logger_name: str = "TensorBoardLogger", **logger_kwargs) -> Logger:
         """
         Instantiate the Logger used by the Trainer in module fitting.
         By default, we use a TensorBoardLogger, but you can use any other logger of your choice.
 
-        @param save_dir: The root directory in which all your experiments with
-            different names and versions will be stored.
-        @param kwargs: Keyword-Arguments to the Logger. Set `logger_name` to use a different logger than TensorBoardLogger.
+        @param logger_name: The name of the logger to use. Defaults to TensorBoardLogger.
+        @param logger_kwargs: Keyword-Arguments to the Logger. Set `logger_name` to use a different logger than TensorBoardLogger.
         @return: The Logger object.
         """
-        logger_kwargs = deepcopy(kwargs)
-        logger_kwargs.update(dict(
-            save_dir=save_dir,
-        ))
-        logger_name = logger_kwargs.pop("logger_name", "TensorBoardLogger")
+        logger_kwargs = logger_kwargs or {}
+        logger_kwargs.setdefault("save_dir", os.getcwd())
         logger_class = utils.get_logger(logger_name)
         if issubclass(logger_class, TensorBoardLogger):
-            logger_kwargs["default_hp_metric"] = False
+            logger_kwargs.setdefault("default_hp_metric", False)
 
-        return logger_class(
-            **logger_kwargs
-        )
+        return logger_class(**logger_kwargs)
 
     def configure_trainer(self, logger_kwargs: dict = None, trainer_kwargs: dict = None) -> lightning.Trainer:
         """
@@ -219,23 +217,20 @@ class Trainable(lightning.LightningModule):
             See also :func:`~trainable.Trainable.configure_trainer`.
         @return: The Lightning Trainer object.
         """
-        if logger_kwargs is None:
-            logger_kwargs = dict()
-        if trainer_kwargs is None:
-            trainer_kwargs = dict()
+        logger_kwargs = logger_kwargs or {}
+        trainer_kwargs = trainer_kwargs or {}
 
-        return lightning.Trainer(
-            accelerator=self.hparams.accelerator.lower(),
-            logger=self.configure_logger(**logger_kwargs),
-            devices=self.hparams.devices,
-            max_epochs=self.hparams.max_epochs,
-            max_steps=self.hparams.max_steps,
-            gradient_clip_val=self.hparams.gradient_clip,
-            accumulate_grad_batches=self.hparams.accumulate_batches,
-            profiler=self.hparams.profiler,
-            benchmark=True,
-            **trainer_kwargs,
-        )
+        trainer_kwargs.setdefault("accelerator", self.hparams.accelerator.lower())
+        trainer_kwargs.setdefault("accumulate_grad_batches", self.hparams.accumulate_batches)
+        trainer_kwargs.setdefault("benchmark", True)
+        trainer_kwargs.setdefault("devices", self.hparams.devices)
+        trainer_kwargs.setdefault("gradient_clip_val", self.hparams.gradient_clip)
+        trainer_kwargs.setdefault("logger", self.configure_logger(**logger_kwargs))
+        trainer_kwargs.setdefault("max_epochs", self.hparams.max_epochs)
+        trainer_kwargs.setdefault("max_steps", self.hparams.max_steps)
+        trainer_kwargs.setdefault("profiler", self.hparams.profiler)
+
+        return lightning.Trainer(**trainer_kwargs)
 
     def on_before_optimizer_step(self, optimizer):
         # who doesn't love breaking changes in underlying libraries
@@ -260,20 +255,21 @@ class Trainable(lightning.LightningModule):
         @param fit_kwargs: Keyword-Arguments to the Trainer's fit method.
         @return: Validation Metrics as defined in :func:`~trainable.Trainable.compute_metrics`.
         """
-        if logger_kwargs is None:
-            logger_kwargs = dict()
-        if trainer_kwargs is None:
-            trainer_kwargs = dict()
-        if fit_kwargs is None:
-            fit_kwargs = dict()
+        logger_kwargs = logger_kwargs or {}
+        trainer_kwargs = trainer_kwargs or {}
+        fit_kwargs = fit_kwargs or {}
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
+
+        # TODO: move this to on_train_start(), see https://lightning.ai/docs/pytorch/stable/extensions/logging.html#logging-hyperparameters
         metrics_list = trainer.validate(self)
         if metrics_list is not None and len(metrics_list) > 0:
             metrics = metrics_list[0]
         else:
             metrics = {}
         trainer.logger.log_hyperparams(self.hparams, metrics)
+
+
         trainer.fit(self, **fit_kwargs)
 
         return {
@@ -318,12 +314,6 @@ class Trainable(lightning.LightningModule):
                 optimizer.step()
 
         return loss
-
-    @classmethod
-    def find_and_load_from_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "last",
-                                      epoch: int | str = "last", step: int | str = "last", **kwargs):
-        checkpoint = utils.find_checkpoint(root, version, epoch, step)
-        return cls.load_from_checkpoint(checkpoint, **kwargs)
 
 
 def auto_pin_memory(pin_memory: bool | None, accelerator: str):

@@ -5,7 +5,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset
 
+from pathlib import Path
+
 from lightning_trainable.trainable import Trainable, TrainableHParams
+from lightning_trainable.utils import find_checkpoint
 
 
 @pytest.fixture
@@ -83,9 +86,13 @@ def test_hparams_invariant(dummy_model_cls, dummy_hparams):
 
 
 def test_checkpoint(dummy_model):
+    # TODO: temp directory
+
     dummy_model.fit()
 
-    trained_model = dummy_model.find_and_load_from_checkpoint()
+    checkpoint = find_checkpoint()
+
+    assert Path(checkpoint).is_file()
 
 
 def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
@@ -94,6 +101,8 @@ def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
         pass
 
     class MyModel(dummy_model_cls):
+        hparams: MyHParams
+
         def __init__(self, hparams):
             super().__init__(hparams)
 
@@ -102,6 +111,22 @@ def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
 
     assert model._hparams_name == "hparams"
 
-    model.fit()
 
-    model.find_and_load_from_checkpoint()
+def test_continue_training(dummy_model):
+    print("Starting Training.")
+    dummy_model.fit()
+
+    print("Finished Training. Loading Checkpoint.")
+    checkpoint = find_checkpoint()
+
+    trained_model = dummy_model.load_from_checkpoint(checkpoint)
+
+    print("Continuing Training.")
+    trained_model.fit(
+        trainer_kwargs=dict(max_epochs=2 * dummy_model.hparams.max_epochs),
+        fit_kwargs=dict(ckpt_path=checkpoint)
+    )
+
+    print("Finished Continued Training.")
+
+    # TODO: add check that the model was actually trained for 2x epochs
