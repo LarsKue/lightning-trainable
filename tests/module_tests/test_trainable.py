@@ -85,7 +85,7 @@ def test_hparams_invariant(dummy_model_cls, dummy_hparams):
 def test_checkpoint(dummy_model):
     dummy_model.fit()
 
-    trained_model = dummy_model.load_checkpoint()
+    trained_model = dummy_model.find_and_load_from_checkpoint()
 
 
 def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
@@ -104,4 +104,4 @@ def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
 
     model.fit()
 
-    model.load_checkpoint()
+    model.find_and_load_from_checkpoint()

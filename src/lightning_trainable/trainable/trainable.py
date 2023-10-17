@@ -320,8 +320,8 @@ class Trainable(lightning.LightningModule):
         return loss
 
     @classmethod
-    def load_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "last",
-                        epoch: int | str = "last", step: int | str = "last", **kwargs):
+    def find_and_load_from_checkpoint(cls, root: str | pathlib.Path = "lightning_logs", version: int | str = "last",
+                                      epoch: int | str = "last", step: int | str = "last", **kwargs):
         checkpoint = utils.find_checkpoint(root, version, epoch, step)
         return cls.load_from_checkpoint(checkpoint, **kwargs)
 
