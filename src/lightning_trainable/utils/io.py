@@ -91,6 +91,15 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
         checkpoint = checkpoint_folder / "last.ckpt"
         if checkpoint.is_file():
             return str(checkpoint)
+        else:
+            contents = "\n".join([str(p) for p in checkpoint_folder.iterdir()])
+            msg = f"""
+            Could not find 'last.ckpt' in '{checkpoint_folder}'.
+            Checkpoint folder exists? {checkpoint_folder.is_dir()}
+            Checkpoint folder contents:
+            {contents}
+            """
+            raise RuntimeError(msg)
 
     # get existing epoch and step number or error
     epoch, step = find_epoch_step(checkpoint_folder, epoch, step)
