@@ -79,7 +79,7 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
     root = Path(root)
 
     if not root.is_dir():
-        raise ValueError(f"Root directory '{root}' does not exist")
+        raise ValueError(f"Checkpoint root directory '{root}' does not exist")
 
     # get existing version number or error
     version = find_version(root, version)
