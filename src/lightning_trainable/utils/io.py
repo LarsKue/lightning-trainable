@@ -98,6 +98,9 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
             msg = f"""
             Could not find 'last.ckpt' in '{checkpoint_folder}'.
             Checkpoint folder exists? {checkpoint_folder.is_dir()}
+            Checkpoint exists? {checkpoint.exists()}
+            Checkpoint is file? {checkpoint.is_file()}
+            Checkpoint path: {checkpoint}
             Checkpoint folder contents:
             {contents}
             """
