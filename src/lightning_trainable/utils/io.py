@@ -88,10 +88,12 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
 
     contents = "\n".join([str(p) for p in checkpoint_folder.iterdir()])
 
+    import os
+
     if epoch == "last" and step == "last":
         # return last.ckpt if it exists
         checkpoint = checkpoint_folder / "last.ckpt"
-        if checkpoint.is_file():
+        if os.path.isfile(str(checkpoint)):
             return str(checkpoint)
         else:
             # TODO: remove debug error
