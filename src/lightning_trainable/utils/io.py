@@ -70,7 +70,7 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
     """
     Helper method to find a lightning checkpoint based on version, epoch and step numbers.
 
-    @param root: logs root directory. Usually "lightning_logs/"
+    @param root: logs root directory. Usually "lightning_logs/" or "lightning_logs/<experiment_name>"
     @param version: version number or "last"
     @param epoch: epoch number or "last"
     @param step: step number or "last"
