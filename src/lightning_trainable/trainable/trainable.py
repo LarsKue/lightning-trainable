@@ -1,6 +1,5 @@
 import lightning
 import os
-import pathlib
 import torch
 
 from copy import deepcopy
@@ -61,10 +60,6 @@ class Trainable(lightning.LightningModule):
         @return: Dictionary containing metrics to log and the loss to perform backpropagation on.
         """
         raise NotImplementedError
-
-    def on_train_start(self):
-        # TODO: get metrics to track from compute_metrics
-        self.logger.log_hyperparams(self.hparams, ...)
 
     def training_step(self, batch, batch_idx):
         try:
