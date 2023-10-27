@@ -9,7 +9,7 @@ description = "A light-weight lightning_trainable module for pytorch-lightning."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
-keywords = ["Machine Learning", "PyTorch", "PyTorch-Lightning"]
+keywords = ["Machine-Learning", "PyTorch", "PyTorch-Lightning"]
 
 authors = [
     { name = "Lars Kühmichel", email = "lars.kuehmichel@stud.uni-heidelberg.de" }
