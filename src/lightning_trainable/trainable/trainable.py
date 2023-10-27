@@ -238,6 +238,14 @@ class Trainable(lightning.LightningModule):
             case other:
                 raise NotImplementedError(f"Unrecognized grad norm: {other}")
 
+    def on_train_start(self) -> None:
+        # get hparams metrics with a test batch
+        test_batch = next(iter(self.trainer.train_dataloader))
+        metrics = self.compute_metrics(test_batch, 0)
+
+        # add hparams to tensorboard
+        self.logger.log_hyperparams(self.hparams, metrics)
+
     @torch.enable_grad()
     def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None, fit_kwargs: dict = None) -> dict:
         """
@@ -255,15 +263,6 @@ class Trainable(lightning.LightningModule):
         fit_kwargs = fit_kwargs or {}
 
         trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
-
-        # TODO: move this to on_train_start(), see https://lightning.ai/docs/pytorch/stable/extensions/logging.html#logging-hyperparameters
-        metrics_list = trainer.validate(self)
-        if metrics_list is not None and len(metrics_list) > 0:
-            metrics = metrics_list[0]
-        else:
-            metrics = {}
-        trainer.logger.log_hyperparams(self.hparams, metrics)
-
 
         trainer.fit(self, **fit_kwargs)
 
