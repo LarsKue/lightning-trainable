@@ -8,3 +8,6 @@ class FullyConnectedNetworkHParams(HParams):
 
     layer_widths: list[int]
     activation: str = "relu"
+
+    norm: Choice("none", "batch", "layer") = "none"
+    dropout: float = 0.0

@@ -17,4 +17,7 @@ class HParamsModule(nn.Module):
         self.hparams = hparams
 
     def __init_subclass__(cls, **kwargs):
-        cls.hparams_type = cls.__annotations__["hparams"]
+        hparams_type = cls.__annotations__.get("hparams")
+        if hparams_type is not None:
+            # only overwrite hparams_type if it is defined by the child class
+            cls.hparams_type = hparams_type

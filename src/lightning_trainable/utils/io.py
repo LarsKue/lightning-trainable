@@ -9,6 +9,10 @@ def find_version(root: str | Path = "lightning_logs", version: int = "last") -> 
     # Determine latest version number if "last" is passed as version number
     if version == "last":
         version_folders = [f for f in root.iterdir() if f.is_dir() and re.match(r"^version_(\d+)$", f.name)]
+
+        if not version_folders:
+            raise FileNotFoundError(f"Found no folders in '{root}' matching the name pattern 'version_<number>'")
+
         version_numbers = [int(re.match(r"^version_(\d+)$", f.name).group(1)) for f in version_folders]
         version = max(version_numbers)
 
@@ -25,7 +29,6 @@ def find_epoch_step(root: str | Path, epoch: int = "last", step: int = "last") -
     @param step: Step number or "last"
     @return: epoch and step numbers
     """
-
     root = Path(root)
 
     # get checkpoint filenames
@@ -36,6 +39,10 @@ def find_epoch_step(root: str | Path, epoch: int = "last", step: int = "last") -
     # remove invalid files
     checkpoints = [cp for cp in checkpoints if pattern.match(cp)]
 
+    if not checkpoints:
+        raise FileNotFoundError(f"Found no checkpoints in '{root}' matching "
+                                f"the name pattern 'epoch=<number>-step=<number>.ckpt'")
+
     # get epochs and steps as list
     matches = [pattern.match(cp) for cp in checkpoints]
     epochs, steps = zip(*[(int(match.group(1)), int(match.group(2))) for match in matches])
@@ -43,7 +50,8 @@ def find_epoch_step(root: str | Path, epoch: int = "last", step: int = "last") -
     if epoch == "last":
         epoch = max(epochs)
     elif epoch not in epochs:
-        raise FileNotFoundError(f"No checkpoint in '{root}' for epoch '{epoch}'.")
+        closest_epoch = min(epochs, key=lambda e: abs(e - epoch))
+        raise FileNotFoundError(f"No checkpoint in '{root}' for epoch '{epoch}'. Closest is '{closest_epoch}'.")
 
     # keep only steps for this epoch
     steps = [s for i, s in enumerate(steps) if epochs[i] == epoch]
@@ -51,7 +59,9 @@ def find_epoch_step(root: str | Path, epoch: int = "last", step: int = "last") -
     if step == "last":
         step = max(steps)
     elif step not in steps:
-        raise FileNotFoundError(f"No checkpoint in '{root}' for epoch '{epoch}', step '{step}'")
+        closest_step = min(steps, key=lambda s: abs(s - step))
+        raise FileNotFoundError(f"No checkpoint in '{root}' for epoch '{epoch}', step '{step}'. "
+                                f"Closest step for this epoch is '{closest_step}'.")
 
     return epoch, step
 
@@ -60,7 +70,7 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
     """
     Helper method to find a lightning checkpoint based on version, epoch and step numbers.
 
-    @param root: logs root directory. Usually "lightning_logs/"
+    @param root: logs root directory. Usually "lightning_logs/" or "lightning_logs/<experiment_name>"
     @param version: version number or "last"
     @param epoch: epoch number or "last"
     @param step: step number or "last"
@@ -69,7 +79,7 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
     root = Path(root)
 
     if not root.is_dir():
-        raise ValueError(f"Root directory '{root}' does not exist")
+        raise ValueError(f"Checkpoint root directory '{root}' does not exist")
 
     # get existing version number or error
     version = find_version(root, version)
@@ -86,8 +96,5 @@ def find_checkpoint(root: str | Path = "lightning_logs", version: int = "last", 
     epoch, step = find_epoch_step(checkpoint_folder, epoch, step)
 
     checkpoint = checkpoint_folder / f"epoch={epoch}-step={step}.ckpt"
-
-    if not checkpoint.is_file():
-        raise FileNotFoundError(f"{version=}, {epoch=}, {step=}")
 
     return str(checkpoint)

@@ -2,7 +2,11 @@
 from lightning.pytorch.callbacks import ProgressBar
 from lightning.pytorch.callbacks.progress.tqdm_progress import Tqdm
 
+from lightning_trainable.utils import deprecate
 
+
+@deprecate("EpochProgressBar causes issues when continuing training or using multi-GPU. "
+           "Use the default Lightning ProgressBar instead.")
 class EpochProgressBar(ProgressBar):
     def __init__(self):
         super().__init__()
@@ -25,6 +29,8 @@ class EpochProgressBar(ProgressBar):
         self.bar.close()
 
 
+@deprecate("StepProgressBar causes issues when continuing training or using multi-GPU. "
+           "Use the default Lightning ProgressBar instead.")
 class StepProgressBar(ProgressBar):
     def __init__(self):
         super().__init__()

@@ -9,7 +9,7 @@ description = "A light-weight lightning_trainable module for pytorch-lightning."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
-keywords = ["Machine Learning", "PyTorch", "PyTorch-Lightning"]
+keywords = ["Machine-Learning", "PyTorch", "PyTorch-Lightning"]
 
 authors = [
     { name = "Lars Kühmichel", email = "lars.kuehmichel@stud.uni-heidelberg.de" }
@@ -57,7 +57,9 @@ tests = [
 ]
 
 experiments = [
-    # these are just recommended packages to run experiments
+    # required
+    "ray[tune] ~= 2.4",
+    # recommended
     "numpy ~= 1.24",
     "matplotlib ~= 3.7",
     "jupyterlab ~= 3.6",

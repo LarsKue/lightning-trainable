@@ -21,6 +21,9 @@ class RangeMeta(type):
         namespace = {"lower": lower, "upper": upper, "exclude": exclude}
         return type(name, bases, namespace)
 
+    def __repr__(self):
+        return f"Range({self.lower!r}, {self.upper!r}, exclude={self.exclude!r})"
+
 
 class Range(metaclass=RangeMeta):
     """

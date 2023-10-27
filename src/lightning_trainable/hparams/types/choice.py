@@ -11,6 +11,9 @@ class ChoiceMeta(type):
         namespace = {"choices": choices}
         return type(name, bases, namespace)
 
+    def __repr__(cls):
+        return f"Choice{cls.choices!r}"
+
 
 class Choice(metaclass=ChoiceMeta):
     """
