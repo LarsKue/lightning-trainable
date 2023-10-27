@@ -269,7 +269,7 @@ class Trainable(lightning.LightningModule):
         return {
             key: value.item()
             for key, value in trainer.callback_metrics.items()
-            if any(key.startswith(key) for key in ["training/", "validation/"])
+            if any(key.startswith(k) for k in ["training/", "validation/"])
         }
 
     @torch.enable_grad()
