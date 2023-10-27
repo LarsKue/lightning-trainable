@@ -14,3 +14,8 @@ class AttributeDict(dict):
 
     def __setattr__(self, key, value):
         self[key] = value
+
+    def copy(self):
+        # copies of AttributeDicts should be AttributeDicts
+        # see also https://github.com/LarsKue/lightning-trainable/issues/13
+        return self.__class__(**super().copy())

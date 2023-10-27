@@ -7,6 +7,7 @@ from torch.utils.data import TensorDataset
 
 from pathlib import Path
 
+from lightning_trainable.hparams import HParams
 from lightning_trainable.trainable import Trainable, TrainableHParams
 from lightning_trainable.utils import find_checkpoint
 
@@ -70,6 +71,18 @@ def test_fit_fast(dummy_model):
     loss = dummy_model.fit_fast(device="cpu")
 
     assert torch.isclose(loss, torch.tensor(0.0))
+
+
+def test_hparams_copy(dummy_hparams, dummy_hparams_cls):
+    assert isinstance(dummy_hparams, HParams)
+    assert isinstance(dummy_hparams, TrainableHParams)
+    assert isinstance(dummy_hparams, dummy_hparams_cls)
+
+    hparams_copy = dummy_hparams.copy()
+
+    assert isinstance(hparams_copy, HParams)
+    assert isinstance(dummy_hparams, TrainableHParams)
+    assert isinstance(dummy_hparams, dummy_hparams_cls)
 
 
 def test_hparams_invariant(dummy_model_cls, dummy_hparams):
