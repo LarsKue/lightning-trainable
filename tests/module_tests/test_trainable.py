@@ -132,7 +132,7 @@ def test_continue_training(dummy_model):
     print("Finished Training. Loading Checkpoint.")
     checkpoint = find_checkpoint()
 
-    trained_model = dummy_model.load_from_checkpoint(checkpoint)
+    trained_model = dummy_model.__class__.load_from_checkpoint(checkpoint)
 
     print("Continuing Training.")
     trained_model.fit(
