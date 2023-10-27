@@ -12,7 +12,7 @@ class TrainableHParams(HParams):
     devices: int = 1
     max_epochs: int | None
     max_steps: int = -1
-    optimizer: str | dict | None = "adam"
+    optimizer: str | dict | None = "Adam"
     lr_scheduler: str | dict | None = None
     batch_size: int
     accumulate_batches: int = 1
