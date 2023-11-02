@@ -243,8 +243,18 @@ class Trainable(lightning.LightningModule):
         test_batch = next(iter(self.trainer.train_dataloader))
         metrics = self.compute_metrics(test_batch, 0)
 
-        # add hparams to tensorboard
-        self.logger.log_hyperparams(self.hparams, metrics)
+        # add hparams to tensorboard (no test on purpose because test data should not be used for hparam optimization)
+        prefixes = []
+        if self.train_data is not None:
+            prefixes.append("training")
+        if self.val_data is not None:
+            prefixes.append("validation")
+        self.logger.log_hyperparams(self.hparams, {
+            # Do not interpret these values -> nan
+            f"{prefix}/{key}": float("nan")
+            for prefix in prefixes
+            for key in metrics.keys()
+        })
 
     @torch.enable_grad()
     def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None, fit_kwargs: dict = None) -> dict:
