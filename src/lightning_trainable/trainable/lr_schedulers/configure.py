@@ -18,7 +18,17 @@ def with_kwargs(model, optimizer, **kwargs) -> LRScheduler:
     name = kwargs.pop("name")
     default_kwargs = defaults.get_defaults(name, model, optimizer)
     kwargs = default_kwargs | kwargs
-    return get_scheduler(name)(optimizer, **kwargs)
+
+    external_kwargs = {
+        key: kwargs.pop(key)
+        for key in ["interval", "frequency", "monitor", "strict"]
+        if key in kwargs
+    }
+
+    return dict(
+        scheduler=get_scheduler(name)(optimizer, **kwargs),
+        **external_kwargs
+    )
 
 
 def configure(model, optimizer) -> LRScheduler | None:

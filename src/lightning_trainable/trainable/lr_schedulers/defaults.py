@@ -10,7 +10,8 @@ def get_defaults(scheduler_name, model, optimizer):
 
             return dict(
                 max_lr=max_lr,
-                total_steps=total_steps
+                total_steps=total_steps,
+                interval="step"
             )
         case _:
             return dict()
