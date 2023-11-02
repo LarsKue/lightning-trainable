@@ -71,12 +71,15 @@ def main(args=None):
 
     # Merge hparams from checkpoint and configs
     checkpoint = None
+    checkpoint_file = None
     fit_kwargs = {}
     if args.start_from is not None:
-        checkpoint = torch.load(args.start_from)
+        ckpt_file = args.start_from
+        checkpoint = torch.load(ckpt_file)
     elif args.continue_from is not None:
-        checkpoint = torch.load(args.continue_from)
-        fit_kwargs["ckpt_path"] = args.continue_from
+        checkpoint_file = args.continue_from
+        checkpoint = torch.load(checkpoint_file)
+        fit_kwargs["ckpt_path"] = checkpoint_file
     if checkpoint is None:
         hparams = {}
     else:
@@ -89,6 +92,11 @@ def main(args=None):
         torch.set_num_threads(num_threads)
 
     # Load the model
+    if "model" not in hparams:
+        model_class_file = checkpoint_file.parent.parent / "model.txt"
+        if model_class_file.is_file():
+            with model_class_file.open("r") as f:
+                hparams["model"] = f.read().strip()
     module_name, model_name = hparams["model"].rsplit(".", 1)
 
     # Log path
@@ -128,6 +136,8 @@ def main(args=None):
         f.write(" ".join(sys.argv))
     with open(log_dir / "seed.txt", "w") as f:
         f.write(str(args.seed))
+    with open(log_dir / "model.txt", "w") as f:
+        f.write(hparams["model"])
     # Overwrite the version for the actual logger
     logger_kwargs["version"] = logger.version
 
