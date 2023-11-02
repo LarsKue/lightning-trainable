@@ -18,7 +18,7 @@ def parse_config_dict(config_spec: Dict[str, Any] | List[Path | str | Tuple[str,
         elif isinstance(arg, Path) or (
                 any(
                     arg.endswith(suffix) for suffix in [".yaml", ".yml", ".json"]
-                ) and "=" not in arg
+                ) and ("/" in arg or "=" not in arg)  # Load from file if it contains "/" but not "="
         ):
             # Read multiple entries from .yaml file
             with open(arg, "r") as file:

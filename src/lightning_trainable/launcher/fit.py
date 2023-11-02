@@ -12,6 +12,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 
 from lightning_trainable.launcher.utils import parse_config_dict
 
+import numpy as np
 import torch
 
 
@@ -36,6 +37,10 @@ def main(args=None):
                         help="When loading a state dict, set `strict`=False")
     parser.add_argument("--gradient-regex", type=str, default=None,
                         help="Parameter names must contain regex expression to have gradient applied.")
+    parser.add_argument("--seed", type=lambda x: x if x == "random" else int(x), default=None,
+                        help="Set the random seed (numpy and pytorch).")
+    parser.add_argument("--run-deterministic", action="store_true", default=False,
+                        help="Run in deterministic mode (slower).")
     log_dir_group = parser.add_mutually_exclusive_group()
     log_dir_group.add_argument("--name", type=str,
                                help="Name of experiment. Experiment data will be stored in "
@@ -50,6 +55,19 @@ def main(args=None):
         import pydevd_pycharm
 
         pydevd_pycharm.settrace('localhost', port=args.pycharm_debug, stdoutToServer=True, stderrToServer=True)
+
+    # Set seeds
+    if args.seed is not None:
+        if args.seed == "random":
+            import random
+            args.seed = random.randint(0, 2 ** 32 - 1)
+            print(f"Random seed: {args.seed}")
+        torch.manual_seed(args.seed)
+        torch.cuda.manual_seed(args.seed)
+        np.random.seed(args.seed)
+
+    # Deterministic mode
+    torch.use_deterministic_algorithms(args.run_deterministic)
 
     # Merge hparams from checkpoint and configs
     checkpoint = None
@@ -108,6 +126,8 @@ def main(args=None):
             attempts += 1
     with open(log_dir / "cli.txt", "w") as f:
         f.write(" ".join(sys.argv))
+    with open(log_dir / "seed.txt", "w") as f:
+        f.write(str(args.seed))
     # Overwrite the version for the actual logger
     logger_kwargs["version"] = logger.version
 
