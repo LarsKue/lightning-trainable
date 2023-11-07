@@ -1,6 +1,7 @@
 import lightning
 import os
 import torch
+import warnings
 
 from copy import deepcopy
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
@@ -240,21 +241,26 @@ class Trainable(lightning.LightningModule):
 
     def on_train_start(self) -> None:
         # get hparams metrics with a test batch
-        test_batch = next(iter(self.trainer.train_dataloader))
+
+        if self.val_data is not None:
+            prefix = "validation"
+            if not isinstance(self.trainer.val_dataloaders, DataLoader):
+                validation_loader = self.trainer.val_dataloaders[0]
+            else:
+                validation_loader = self.trainer.val_dataloaders
+
+            test_batch = next(iter(validation_loader))
+        elif self.train_data is not None:
+            # no validation data, fallback to train data
+            prefix = "training"
+            test_batch = next(iter(self.trainer.train_dataloader))
+        else:
+            warnings.warn("Could not log hyperparameters because no train or validation data was provided.")
+            return
+
         metrics = self.compute_metrics(test_batch, 0)
 
-        # add hparams to tensorboard (no test on purpose because test data should not be used for hparam optimization)
-        prefixes = []
-        if self.train_data is not None:
-            prefixes.append("training")
-        if self.val_data is not None:
-            prefixes.append("validation")
-        self.logger.log_hyperparams(self.hparams, {
-            # Do not interpret these values -> nan
-            f"{prefix}/{key}": float("nan")
-            for prefix in prefixes
-            for key in metrics.keys()
-        })
+        self.logger.log_hyperparams(self.hparams, {f"{prefix}/{key}": value for key, value in metrics.items()})
 
     @torch.enable_grad()
     def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None, fit_kwargs: dict = None) -> dict:
