@@ -212,8 +212,18 @@ class HParams(AttributeDict):
             if any(isinstance(t, GenericAlias) for t in type_args):
                 # cover hints like str | list[int]
                 for arg in type_args:
-                    cls._check_type(key, value, arg)
-                return
+                    try:
+                        cls._check_type(key, value, arg)
+                        # type matched
+                        return
+                    except TypeError:
+                        # type did not match, try next type
+                        continue
+
+                # found no type matches in the Union
+                raise TypeError(f"HParam '{key}' is required to be of one of the following types: "
+                                f"{', '.join(type_name(t) for t in type_args)}, "
+                                f"but got `{value}` of type `{type_name(type(value))}`.")
 
         if isinstance(T, GenericAlias):
             # cover hints like list[int] or dict[str, int]

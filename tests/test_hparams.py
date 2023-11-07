@@ -289,6 +289,40 @@ def test_generics():
         hparams = GenericHParams(value=(1, 2))
 
 
+def test_union():
+    class UnionHParams(HParams):
+        value: int | str
+
+    hparams = UnionHParams(value=1)
+    assert isinstance(hparams.value, int)
+    assert hparams.value == 1
+
+    hparams = UnionHParams(value="1")
+
+    assert isinstance(hparams.value, str)
+    assert hparams.value == "1"
+
+    with pytest.raises(TypeError):
+        hparams = UnionHParams(value=1.0)
+
+
+def test_generic_union():
+    class GenericUnionHParams(HParams):
+        value: str | list[int]
+
+    hparams = GenericUnionHParams(value="1")
+    assert isinstance(hparams.value, str)
+    assert hparams.value == "1"
+
+    hparams = GenericUnionHParams(value=[1, 2, 3])
+    assert isinstance(hparams.value, list)
+    assert all(isinstance(item, int) for item in hparams.value)
+    assert hparams.value == [1, 2, 3]
+
+    with pytest.raises(TypeError):
+        hparams = GenericUnionHParams(value=1)
+
+
 def test_unsupported_generics():
     T = TypeVar("T")
 
