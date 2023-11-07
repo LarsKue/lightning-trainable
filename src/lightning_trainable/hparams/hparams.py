@@ -261,6 +261,8 @@ class HParams(AttributeDict):
                     raise TypeError(f"Dict value for key '{k}' is required to be of type `{type_name(V)}`, "
                                     f"but got `{v}` of type `{type_name(type(v))}`.")
 
+            return
+
         if basic_type is list:
             V = type_args[0]
             for i, v in enumerate(value):
@@ -269,11 +271,20 @@ class HParams(AttributeDict):
                     raise TypeError(f"List value at index {i} is required to be of type `{type_name(V)}`, "
                                     f"but got `{v}` of type `{type_name(type(v))}`.")
 
+            return
+
         if basic_type is tuple:
             for i, (v, V) in enumerate(zip(value, type_args)):
                 if not isinstance(v, V):
                     raise TypeError(f"Tuple value at index {i} is required to be of type `{type_name(V)}`, "
                                     f"but got `{v}` of type `{type_name(type(v))}`.")
+
+            return
+
+        git_url = "https://github.com/LarsKue/lightning-trainable"
+        raise NotImplementedError(f"HParams does not support generic types for the basic type "
+                                  f"'{basic_type}' of parameter '{key}'. "
+                                  f"Please file an issue at {git_url} if you need this feature.")
 
     @classmethod
     def parameters(cls) -> dict[str, type]:
