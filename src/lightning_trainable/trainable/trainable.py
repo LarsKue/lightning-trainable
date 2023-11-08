@@ -258,6 +258,8 @@ class Trainable(lightning.LightningModule):
             warnings.warn("Could not log hyperparameters because no train or validation data was provided.")
             return
 
+        test_batch = self.transfer_batch_to_device(test_batch, self.device, 0)
+
         metrics = self.compute_metrics(test_batch, 0)
 
         self.logger.log_hyperparams(self.hparams, {f"{prefix}/{key}": value for key, value in metrics.items()})
