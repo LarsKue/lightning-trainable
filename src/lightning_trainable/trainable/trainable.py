@@ -318,7 +318,7 @@ class Trainable(lightning.LightningModule):
         loss = None
         for _epoch in tqdm(range(self.hparams.max_epochs)):
             for batch_idx, batch in enumerate(dataloader):
-                batch = tuple(t.to(device) for t in batch if torch.is_tensor(t))
+                batch = self.transfer_batch_to_device(batch, self.device, 0)
 
                 optimizer.zero_grad()
                 loss = self.training_step(batch, batch_idx)
