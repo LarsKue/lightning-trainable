@@ -6,6 +6,7 @@ import warnings
 from copy import deepcopy
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
 from lightning.pytorch.loggers import Logger, TensorBoardLogger
+from pathlib import Path
 from torch.utils.data import DataLoader, Dataset, IterableDataset
 from tqdm import tqdm
 
@@ -290,6 +291,16 @@ class Trainable(lightning.LightningModule):
             if any(key.startswith(k) for k in ["training/", "validation/"])
         }
 
+    @torch.no_grad()
+    def validate(self, logger_kwargs: dict = None, trainer_kwargs: dict = None, validate_kwargs: dict = None):
+        logger_kwargs = logger_kwargs or {}
+        trainer_kwargs = trainer_kwargs or {}
+        validate_kwargs = validate_kwargs or {}
+
+        trainer = self.configure_trainer(logger_kwargs, trainer_kwargs)
+
+        return trainer.validate(self, **validate_kwargs)
+
     @torch.enable_grad()
     def fit_fast(self, device="cuda"):
         """
@@ -326,6 +337,43 @@ class Trainable(lightning.LightningModule):
                 optimizer.step()
 
         return loss
+
+    @classmethod
+    def load_best_checkpoint(cls, root: str | Path = "lightning_logs", version: int = "last", metric: str = "validation/loss", dataloader_idx: int = 0):
+        root = Path(root)
+
+        if not root.is_dir():
+            raise ValueError(f"Checkpoint root directory '{root}' does not exist")
+
+        # get existing version number or error
+        version = utils.io.find_version(root, version)
+
+        logs_folder = root / f"version_{version}"
+        checkpoint_folder = root / f"version_{version}" / "checkpoints"
+
+        checkpoints = list(checkpoint_folder.glob("*.ckpt"))
+        if len(checkpoints) == 0:
+            raise FileNotFoundError(f"No checkpoints in '{checkpoint_folder}'")
+
+        best_model = None
+        best_metric = None
+
+        # TODO: check via logs instead? (is cheaper, but not portable between loggers)
+        for cp in checkpoints:
+            model = cls.load_from_checkpoint(cp)
+            metrics = model.validate(trainer_kwargs=dict(logger=None))
+            metrics = metrics[dataloader_idx]
+            if metric not in metrics:
+                raise RuntimeError(f"Could not find metric '{metric}' in validation metrics.")
+
+            if best_metric is None or metrics[metric] < best_metric:
+                print("Found new best model:", cp, metrics[metric])
+                best_metric = metrics[metric]
+                best_model = model
+            else:
+                print("New model was worse:", cp, metrics[metric])
+
+        return best_model
 
 
 def auto_pin_memory(pin_memory: bool | None, accelerator: str):
