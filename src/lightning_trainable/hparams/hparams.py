@@ -135,7 +135,7 @@ class HParams(AttributeDict):
         if not have_keys.issubset(all_keys):
             extra_keys = have_keys - all_keys
             values = [hparams[key] for key in extra_keys]
-            message = "Received the following extra hparams:"
+            message = "Received the following extra hparams:\n"
             message += "\n".join([
                 f"{i + 1:4d}: '{key}' = {value}" for i, (key, value) in enumerate(zip(extra_keys, values))
             ])
