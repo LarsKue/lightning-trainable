@@ -143,3 +143,17 @@ def test_continue_training(dummy_model):
     print("Finished Continued Training.")
 
     # TODO: add check that the model was actually trained for 2x epochs
+
+
+def test_lr_scheduler(dummy_model_cls, dummy_hparams):
+    dummy_hparams.lr_scheduler = dict(
+        name="OneCycleLR",
+        interval="step",
+        kwargs=dict(
+            max_lr=1e-4,
+        )
+    )
+
+    dummy_model = dummy_model_cls(dummy_hparams)
+
+    dummy_model.fit()
