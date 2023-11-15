@@ -87,10 +87,10 @@ class HParams(AttributeDict):
                 return
 
             # cover hints like MyGeneric[int] or frozenset[int]
-            git_url = "https://github.com/LarsKue/lightning-trainable"
+            from lightning_trainable.meta import issues_url
             raise NotImplementedError(f"HParams does not support generic types for the basic type "
                                       f"'{basic_type}' of parameter '{parameter}'. "
-                                      f"Please file an issue at {git_url} if you need this feature.")
+                                      f"Please file an issue at {issues_url} if you need this feature.")
 
         # other types are just basic types,
         # e.g. str, int, float, etc.
