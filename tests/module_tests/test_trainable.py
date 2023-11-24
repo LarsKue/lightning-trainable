@@ -157,3 +157,16 @@ def test_lr_scheduler(dummy_model_cls, dummy_hparams):
     dummy_model = dummy_model_cls(dummy_hparams)
 
     dummy_model.fit()
+
+
+def test_load_best_model(dummy_model_cls, dummy_hparams):
+    dummy_hparams.model_checkpoint = dict(
+        monitor="auto",
+        save_last=True,
+        every_n_epochs=1,
+        save_top_k=5
+    )
+    dummy_model = dummy_model_cls(dummy_hparams)
+
+    dummy_model.fit()
+    dummy_model.__class__.load_best_checkpoint()
