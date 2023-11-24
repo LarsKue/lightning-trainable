@@ -24,12 +24,6 @@ def configure(model: "trainable.Trainable", optimizer: Optimizer) -> dict | None
             # get the default config for that scheduler
             config = defaults.get_config(name)
             kwargs = defaults.get_kwargs(name, model, optimizer)
-            scheduler = get_scheduler(name)(optimizer=optimizer, **kwargs)
-
-            return dict(
-                scheduler=scheduler,
-                **config,
-            )
         case dict() as config:
             # the user specified an additional config for the scheduler
             # fill in the missing values with the default config
@@ -44,14 +38,15 @@ def configure(model: "trainable.Trainable", optimizer: Optimizer) -> dict | None
             # combine user-defined config options with defaults
             config = defaults.get_config(name) | config
 
-            scheduler = get_scheduler(name)(optimizer=optimizer, **kwargs)
-
-            return dict(
-                scheduler=scheduler,
-                **config,
-            )
         case None:
             # do not use a learning rate scheduler
             return None
         case other:
             raise NotImplementedError(f"Unrecognized Scheduler: '{other}'")
+
+    scheduler = get_scheduler(name)(optimizer=optimizer, **kwargs)
+
+    return dict(
+        scheduler=scheduler,
+        **config,
+    )
