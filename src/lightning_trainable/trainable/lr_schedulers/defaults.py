@@ -1,16 +1,26 @@
-
-def get_defaults(scheduler_name, model, optimizer):
+def get_config(scheduler_name):
     match scheduler_name:
         case "OneCycleLR":
-            max_lr = optimizer.defaults["lr"]
-            total_steps = model.hparams.max_steps
-            if total_steps == -1:
-                total_steps = model.hparams.max_epochs * len(model.train_dataloader())
-                total_steps = int(total_steps / model.hparams.accumulate_batches)
-
-            return dict(
-                max_lr=max_lr,
-                total_steps=total_steps
-            )
+            return {
+                "interval": "step",
+                "frequency": 1,
+                "monitor": "validation/loss",
+                "strict": True,
+            }
         case _:
-            return dict()
+            return {}
+
+
+def get_kwargs(scheduler_name, model, optimizer):
+    match scheduler_name:
+        case "OneCycleLR":
+            kwargs = dict()
+            kwargs["max_lr"] = optimizer.defaults["lr"]
+            if model.hparams.max_steps != -1:
+                kwargs["total_steps"] = model.hparams.max_steps // model.hparams.accumulate_batches
+            else:
+                kwargs["total_steps"] = model.hparams.max_epochs * int(len(model.train_dataloader()) / model.hparams.accumulate_batches)
+
+            return kwargs
+        case _:
+            return {}
