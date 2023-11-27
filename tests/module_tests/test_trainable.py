@@ -108,6 +108,28 @@ def test_checkpoint(dummy_model):
     assert Path(checkpoint).is_file()
 
 
+def test_load_checkpoint(dummy_model_cls, dummy_hparams):
+    dummy_model = dummy_model_cls(dummy_hparams)
+
+    assert dummy_model._hparams_name == "hparams"
+
+    dummy_model.fit()
+
+    checkpoint = find_checkpoint()
+
+    loaded_model = dummy_model_cls.load_from_checkpoint(checkpoint)
+
+    assert isinstance(loaded_model, dummy_model_cls)
+    assert loaded_model.hparams == dummy_hparams
+    loaded_dict = loaded_model.state_dict()
+    dummy_dict = dummy_model.state_dict()
+
+    assert set(loaded_dict.keys()) == set(dummy_dict.keys())
+
+    for key in loaded_dict.keys():
+        assert torch.allclose(loaded_dict[key], dummy_dict[key])
+
+
 def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
 
     class MyHParams(dummy_hparams_cls):
