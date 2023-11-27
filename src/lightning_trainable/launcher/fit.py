@@ -91,6 +91,11 @@ def main(args=None):
     if num_threads is not None:
         torch.set_num_threads(num_threads)
 
+    # Set matmul precision
+    matmul_precision = hparams.pop("matmul_precision", None)
+    if matmul_precision is not None:
+        torch.set_float32_matmul_precision(matmul_precision)
+
     # Load the model
     if "model" not in hparams:
         model_class_file = checkpoint_file.parent.parent / "model.txt"
