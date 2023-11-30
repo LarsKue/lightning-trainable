@@ -125,6 +125,17 @@ def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
     assert model._hparams_name == "hparams"
 
 
+def test_load_hparams(dummy_model):
+    dummy_model.fit()
+
+    checkpoint = find_checkpoint()
+
+    hparams_file = Path(checkpoint).parent.parent / "hparams.yaml"
+    assert hparams_file.is_file()
+    hparams = HParams.from_yaml(hparams_file)
+    assert hparams == dummy_model.hparams
+
+
 def test_continue_training(dummy_model):
     print("Starting Training.")
     dummy_model.fit()
