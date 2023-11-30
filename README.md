@@ -97,18 +97,12 @@ tensorboard --logdir lightning_logs/
 To load a model checkpoint, use
 
 ```python
-MyModel.load_checkpoint(version=7, epoch="latest")
+checkpoint = lightning_trainable.utils.find_checkpoint(version=7, epoch="last")
+MyModel.load_from_checkpoint(checkpoint)
 ```
 
 Here, you can specify a root directory, version, epoch and step number
 to load your precise checkpoint, or simply load the latest of each.
-
-Alternatively, you can specify the path directly using the base lightning
-variant:
-
-```python
-MyModel.load_from_checkpoint(checkpoint_path)
-```
 
 ## Datasets
 We aim to provide a rich collection of both toy and benchmark datasets, which work out-of-the-box.
