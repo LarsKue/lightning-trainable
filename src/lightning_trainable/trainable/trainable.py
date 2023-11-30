@@ -263,7 +263,10 @@ class Trainable(lightning.LightningModule):
 
         test_batch = self.transfer_batch_to_device(test_batch, self.device, 0)
 
+        was_training = self.training
+        self.eval()
         metrics = self.compute_metrics(test_batch, 0)
+        self.train(was_training)
 
         self.logger.log_hyperparams(self.hparams, {f"{prefix}/{key}": value for key, value in metrics.items()})
 
