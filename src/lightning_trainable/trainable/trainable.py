@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, Dataset, IterableDataset
 from tqdm import tqdm
 
 from lightning_trainable import utils
+from lightning_trainable.callbacks import LogHParamsCallback
 from .trainable_hparams import TrainableHParams
 
 from . import lr_schedulers
@@ -134,6 +135,7 @@ class Trainable(lightning.LightningModule):
         callbacks = [
             ModelCheckpoint(**checkpoint_kwargs),
             LearningRateMonitor(),
+            LogHParamsCallback(),
         ]
         if self.hparams.early_stopping is not None:
             if self.hparams.early_stopping["monitor"] == "auto":
@@ -241,31 +243,6 @@ class Trainable(lightning.LightningModule):
                 pass
             case other:
                 raise NotImplementedError(f"Unrecognized grad norm: {other}")
-
-    def on_train_start(self) -> None:
-        # get hparams metrics with a test batch
-
-        if self.val_data is not None:
-            prefix = "validation"
-            if not isinstance(self.trainer.val_dataloaders, DataLoader):
-                validation_loader = self.trainer.val_dataloaders[0]
-            else:
-                validation_loader = self.trainer.val_dataloaders
-
-            test_batch = next(iter(validation_loader))
-        elif self.train_data is not None:
-            # no validation data, fallback to train data
-            prefix = "training"
-            test_batch = next(iter(self.trainer.train_dataloader))
-        else:
-            warnings.warn("Could not log hyperparameters because no train or validation data was provided.")
-            return
-
-        test_batch = self.transfer_batch_to_device(test_batch, self.device, 0)
-
-        metrics = self.compute_metrics(test_batch, 0)
-
-        self.logger.log_hyperparams(self.hparams, {f"{prefix}/{key}": value for key, value in metrics.items()})
 
     @torch.enable_grad()
     def fit(self, logger_kwargs: dict = None, trainer_kwargs: dict = None, fit_kwargs: dict = None) -> dict:
