@@ -22,7 +22,6 @@ class LogHParamsCallback(Callback):
             else:
                 validation_loader = trainer.val_dataloaders
 
-            test_batch = model.on_after_batch_transfer()
             test_batch = next(iter(validation_loader))
         elif model.train_data is not None:
             # no validation data, fallback to train data
