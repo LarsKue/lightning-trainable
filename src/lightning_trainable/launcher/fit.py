@@ -138,6 +138,9 @@ def main(args=None):
         f.write(str(args.seed))
     with open(log_dir / "model.txt", "w") as f:
         f.write(hparams["model"])
+    if os.environ.get("SLURM_JOB_ID") is not None:
+        with open(log_dir / "slurm_job_id.txt", "w") as f:
+            f.write(os.environ["SLURM_JOB_ID"])
     # Overwrite the version for the actual logger
     logger_kwargs["version"] = logger.version
 
