@@ -9,7 +9,6 @@ from torch.utils.data import DataLoader
 class LogHParamsCallback(Callback):
     def __init__(self):
         super().__init__()
-        self.done = False
 
     def on_train_start(self, trainer, model) -> None:
         # get hparams metrics with a test batch
