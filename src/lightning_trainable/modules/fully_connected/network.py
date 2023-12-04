@@ -27,10 +27,14 @@ class FullyConnectedNetwork(SequentialMixin, HParamsModule):
     def configure_network(self):
         widths = self.hparams.layer_widths
 
-        # input layer
-        input_linear = self.configure_linear(self.hparams.input_dims, widths[0])
-        input_activation = self.configure_activation()
-        layers = [input_linear, input_activation]
+        network = nn.Sequential()
+
+        input_layer = nn.Sequential(
+            self.configure_linear(self.hparams.input_dims, widths[0]),
+            self.configure_activation(),
+        )
+
+        network.extend(input_layer)
 
         # hidden layers
         for (in_features, out_features) in zip(widths[:-1], widths[1:]):
@@ -40,20 +44,34 @@ class FullyConnectedNetwork(SequentialMixin, HParamsModule):
             activation = self.configure_activation()
             linear = self.configure_linear(in_features, out_features)
 
+            hidden_layer = nn.Sequential()
+
             if dropout is not None:
-                layers.append(dropout)
+                hidden_layer.append(dropout)
 
             if norm is not None:
-                layers.append(norm)
+                hidden_layer.append(norm)
 
-            layers.append(linear)
-            layers.append(activation)
+            hidden_layer.append(linear)
+            hidden_layer.append(activation)
 
-        # output layer
-        output_linear = self.configure_linear(widths[-1], self.hparams.output_dims)
-        layers.append(output_linear)
+            network.extend(hidden_layer)
 
-        return nn.Sequential(*layers)
+        output_layer = nn.Sequential()
+
+        if self.hparams.last_layer_dropout:
+            dropout = self.configure_dropout()
+            if dropout is not None:
+                output_layer.append(dropout)
+
+        output_layer.append(self.configure_linear(widths[-1], self.hparams.output_dims))
+
+        if self.hparams.last_layer_activation:
+            output_layer.append(self.configure_activation())
+
+        network.extend(output_layer)
+
+        return network
 
     def configure_linear(self, in_features, out_features) -> nn.Module:
         match in_features:

@@ -11,3 +11,6 @@ class FullyConnectedNetworkHParams(HParams):
 
     norm: Choice("none", "batch", "layer") = "none"
     dropout: float = 0.0
+
+    last_layer_dropout: bool = False
+    last_layer_activation: bool = False
