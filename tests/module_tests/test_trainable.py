@@ -108,6 +108,28 @@ def test_checkpoint(dummy_model):
     assert Path(checkpoint).is_file()
 
 
+def test_load_checkpoint(dummy_model_cls, dummy_hparams):
+    dummy_model = dummy_model_cls(dummy_hparams)
+
+    assert dummy_model._hparams_name == "hparams"
+
+    dummy_model.fit()
+
+    checkpoint = find_checkpoint()
+
+    loaded_model = dummy_model_cls.load_from_checkpoint(checkpoint)
+
+    assert isinstance(loaded_model, dummy_model_cls)
+    assert loaded_model.hparams == dummy_hparams
+    loaded_dict = loaded_model.state_dict()
+    dummy_dict = dummy_model.state_dict()
+
+    assert set(loaded_dict.keys()) == set(dummy_dict.keys())
+
+    for key in loaded_dict.keys():
+        assert torch.allclose(loaded_dict[key], dummy_dict[key])
+
+
 def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
 
     class MyHParams(dummy_hparams_cls):
@@ -123,6 +145,17 @@ def test_nested_checkpoint(dummy_model_cls, dummy_hparams_cls):
     model = MyModel(hparams)
 
     assert model._hparams_name == "hparams"
+
+
+def test_load_hparams(dummy_model):
+    dummy_model.fit()
+
+    checkpoint = find_checkpoint()
+
+    hparams_file = Path(checkpoint).parent.parent / "hparams.yaml"
+    assert hparams_file.is_file()
+    hparams = HParams.from_yaml(hparams_file)
+    assert hparams == dummy_model.hparams
 
 
 def test_continue_training(dummy_model):
@@ -143,6 +176,20 @@ def test_continue_training(dummy_model):
     print("Finished Continued Training.")
 
     # TODO: add check that the model was actually trained for 2x epochs
+
+
+def test_lr_scheduler(dummy_model_cls, dummy_hparams):
+    dummy_hparams.lr_scheduler = dict(
+        name="OneCycleLR",
+        interval="step",
+        kwargs=dict(
+            max_lr=1e-4,
+        )
+    )
+
+    dummy_model = dummy_model_cls(dummy_hparams)
+
+    dummy_model.fit()
 
 
 def test_load_best_model(dummy_model_cls, dummy_hparams):
