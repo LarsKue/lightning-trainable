@@ -1,4 +1,6 @@
 
+import torch
+
 from lightning_trainable.hparams import HParams
 from lightning.pytorch.profilers import Profiler
 from lightning_trainable.utils import deprecate
@@ -8,7 +10,7 @@ class TrainableHParams(HParams):
     # name of the loss, your `compute_metrics` should return a dict with this name in its keys
     loss: str = "loss"
 
-    accelerator: str = "gpu"
+    accelerator: str = "gpu" if torch.cuda.is_available() else "cpu"
     devices: int = 1
     max_epochs: int | None
     max_steps: int = -1
