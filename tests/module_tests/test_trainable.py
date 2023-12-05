@@ -154,7 +154,7 @@ def test_load_hparams(dummy_model):
 
     hparams_file = Path(checkpoint).parent.parent / "hparams.yaml"
     assert hparams_file.is_file()
-    hparams = HParams.from_yaml(hparams_file)
+    hparams = dummy_model.hparams_type.from_yaml(hparams_file)
     assert hparams == dummy_model.hparams
 
 

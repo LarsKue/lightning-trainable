@@ -36,7 +36,7 @@ class Trainable(lightning.LightningModule):
         super().__init__()
         if not isinstance(hparams, self.hparams_type):
             hparams = self.hparams_type(**hparams)
-        self.save_hyperparameters(hparams)
+        self.save_hyperparameters(hparams.as_dict())
         # workaround for https://github.com/Lightning-AI/lightning/issues/17889
         self._hparams_name = "hparams"
 
