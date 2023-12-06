@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lightning_trainable"
-version = "0.3.1"
+version = "0.4.0-rc1"
 description = "A light-weight lightning_trainable module for pytorch-lightning."
 readme = "README.md"
 requires-python = ">=3.10"
