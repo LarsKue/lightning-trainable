@@ -14,3 +14,4 @@ class FullyConnectedNetworkHParams(HParams):
 
     last_layer_dropout: bool = False
     last_layer_activation: bool = False
+    last_layer_norm: bool = False
