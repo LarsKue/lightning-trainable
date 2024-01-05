@@ -1,6 +1,5 @@
 from .deprecate import deprecate
 from .io import find_checkpoint
-from .iteration import flatten, zip
 from .modules import (
     get_activation,
     get_module,
@@ -8,3 +7,4 @@ from .modules import (
     get_scheduler,
     get_logger
 )
+from .preprocessing import normalize

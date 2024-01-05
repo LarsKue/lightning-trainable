@@ -33,8 +33,8 @@ class MyClassifier(Trainable):
     # specify your hparams class
     hparams: MyClassifierHParams
     
-    def __init__(self, hparams, **datasets):
-        super().__init__(hparams, **datasets)
+    def __init__(self, hparams, *datasets):
+        super().__init__(hparams, *datasets)
         self.network = FullyConnectedNetwork(self.hparams.network_hparams)
 
     def compute_metrics(self, batch, batch_idx):
@@ -51,7 +51,7 @@ class MyClassifier(Trainable):
             "top1_accuracy": top1_accuracy,
         }
         
-        if self.hparams.network_hparams.output_size > 5:
+        if self.hparams.network_hparams.output_dims > 5:
             # only log top-5 accuracy if it can be computed
             metrics["top5_accuracy"] = accuracy(yhat, y, k=5)
 
@@ -74,6 +74,8 @@ class MyClassifierHParams(TrainableHParams):
 ### 3. Train your model with `model.fit()`
 ```python
 hparams = MyClassifierHParams(
+    batch_size=128,
+    max_epochs=100,
     network_hparams=dict(
         input_dims=28 * 28,
         output_dims=10,
@@ -82,7 +84,10 @@ hparams = MyClassifierHParams(
     ),
 )
 
-model = MyClassifier(hparams)
+# e.g. MNIST
+train_data, val_data = ...
+
+model = MyClassifier(hparams, train_data, val_data)
 model.fit()
 ```
 

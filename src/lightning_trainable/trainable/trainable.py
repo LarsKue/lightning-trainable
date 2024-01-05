@@ -318,7 +318,7 @@ class Trainable(lightning.LightningModule):
         return loss
 
     @classmethod
-    def load_best_checkpoint(cls, root: str | Path = "lightning_logs", version: int = "last", metric: str = "validation/loss", dataloader_idx: int = 0):
+    def load_best_checkpoint(cls, root: str | Path = "lightning_logs", version: int = "last", metric: str = "validation/loss", val_data: Dataset = None, dataloader_idx: int = 0):
         root = Path(root)
 
         if not root.is_dir():
@@ -340,8 +340,16 @@ class Trainable(lightning.LightningModule):
         # TODO: check via logs instead? (is cheaper, but not portable between loggers)
         for cp in checkpoints:
             model = cls.load_from_checkpoint(cp)
+            if val_data is not None:
+                model.val_data = val_data
+
             metrics = model.validate(trainer_kwargs=dict(logger=None))
+
+            if not metrics:
+                raise RuntimeError(f"No validation metrics found in checkpoint {cp}. Did you pass a validation dataset?")
+
             metrics = metrics[dataloader_idx]
+
             if metric not in metrics:
                 raise RuntimeError(f"Could not find metric '{metric}' in validation metrics.")
 

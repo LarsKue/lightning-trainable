@@ -31,9 +31,7 @@ def configure(model: "trainable.Trainable", optimizer: Optimizer) -> dict | None
             name = config.pop("name")
 
             # combine user-defined kwargs with defaults
-            kwargs = defaults.get_kwargs(name, model, optimizer)
-            if "kwargs" in config:
-                kwargs = kwargs | config.pop("kwargs")
+            kwargs = defaults.get_kwargs(name, model, optimizer) | config.pop("kwargs", dict())
 
             # combine user-defined config options with defaults
             config = defaults.get_config(name) | config

@@ -17,9 +17,9 @@ def get_kwargs(scheduler_name, model, optimizer):
             kwargs = dict()
             kwargs["max_lr"] = optimizer.defaults["lr"]
             if model.hparams.max_steps != -1:
-                kwargs["total_steps"] = model.hparams.max_steps // model.hparams.accumulate_batches
+                kwargs["total_steps"] = model.hparams.max_steps
             else:
-                kwargs["total_steps"] = model.hparams.max_epochs * int(len(model.train_dataloader()) / model.hparams.accumulate_batches)
+                kwargs["total_steps"] = int(model.hparams.max_epochs * len(model.train_dataloader()) / model.hparams.accumulate_batches)
 
             return kwargs
         case _:
