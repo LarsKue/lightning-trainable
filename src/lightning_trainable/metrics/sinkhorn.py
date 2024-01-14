@@ -70,7 +70,7 @@ def sinkhorn(x: Tensor, y: Tensor, cost: Tensor = None, epsilon: float = 1.0, sc
     if not converged:
         badness = torch.max(torch.abs(marginal))
         warnings.warn(f"Sinkhorn-Knopp did not converge (badness: {badness:.1e}). "
-                      f"Consider relaxing epsilon ({epsilon:.1e}) or increasing the"
+                      f"Consider relaxing epsilon ({epsilon:.1e}) or increasing the "
                       f"number of iterations ({max_steps}).")
 
     return log_plan

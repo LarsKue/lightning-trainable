@@ -1,15 +1,17 @@
 
 import warnings
 
-from lightning import Callback
+import torch
+import lightning
 
 from torch.utils.data import DataLoader
 
 
-class LogHParamsCallback(Callback):
+class LogHParamsCallback(lightning.Callback):
     def __init__(self):
         super().__init__()
 
+    @torch.no_grad()
     def on_train_start(self, trainer, model) -> None:
         # get hparams metrics with a test batch
         model.eval()
@@ -32,7 +34,7 @@ class LogHParamsCallback(Callback):
 
         test_batch = model.transfer_batch_to_device(test_batch, model.device, 0)
 
-        metrics = model.compute_metrics(test_batch, 0)
+        metrics = model.validation_metrics(test_batch, 0)
 
         model.logger.log_hyperparams(model.hparams, {f"{prefix}/{key}": value for key, value in metrics.items()})
 

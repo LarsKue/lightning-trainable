@@ -1,7 +1,6 @@
 import lightning
 import os
 import torch
-import warnings
 
 from copy import deepcopy
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
@@ -50,12 +49,12 @@ class Trainable(lightning.LightningModule):
             # only overwrite hparams_type if it is defined by the child class
             cls.hparams_type = hparams_type
 
-    def compute_metrics(self, batch, batch_idx) -> dict:
+    def training_metrics(self, batch, batch_idx) -> dict:
         """
-        Compute any relevant metrics, including the loss, on the given batch.
-        You should return a dict in the style of {metric_name: metric_value} from this method,
-        where metric_value is scalar. The loss as defined by your hparams must also be a key
-        of this dictionary.
+        Compute metrics that are always evaluated.
+
+        This should return a dictionary in the style of {metric_name: metric_value} where metric_value is scalar.
+        The loss as defined by your hparams must also be a key of this dictionary.
 
         You *must* override this method and you *must* return the loss as defined by your hparams
         within the dictionary, if you want to use :func:`trainable.Trainable.fit`
@@ -66,9 +65,27 @@ class Trainable(lightning.LightningModule):
         """
         raise NotImplementedError
 
+    @utils.deprecate("compute_metrics was renamed to training_metrics.", "0.4.0")
+    def compute_metrics(self, batch, batch_idx) -> dict:
+        return self.training_metrics(batch, batch_idx)
+
+    def validation_metrics(self, batch, batch_idx) -> dict:
+        """
+        Compute metrics that are only evaluated during validation.
+        See also :func:`~trainable.Trainable.training_metrics`.
+        """
+        return self.training_metrics(batch, batch_idx)
+
+    def test_metrics(self, batch, batch_idx) -> dict:
+        """
+        Compute metrics that are only evaluated during testing.
+        See also :func:`~trainable.Trainable.training_metrics`.
+        """
+        return self.validation_metrics(batch, batch_idx)
+
     def training_step(self, batch, batch_idx):
         try:
-            metrics = self.compute_metrics(batch, batch_idx)
+            metrics = self.training_metrics(batch, batch_idx)
         except SkipBatch:
             return None
 
@@ -85,13 +102,13 @@ class Trainable(lightning.LightningModule):
         return metrics[self.hparams.loss]
 
     def validation_step(self, batch, batch_idx):
-        metrics = self.compute_metrics(batch, batch_idx)
+        metrics = self.validation_metrics(batch, batch_idx)
         for key, value in metrics.items():
             self.log(f"validation/{key}", value,
                      prog_bar=key == self.hparams.loss)
 
     def test_step(self, batch, batch_idx):
-        metrics = self.compute_metrics(batch, batch_idx)
+        metrics = self.test_metrics(batch, batch_idx)
         for key, value in metrics.items():
             self.log(f"test/{key}", value,
                      prog_bar=key == self.hparams.loss)
