@@ -17,7 +17,8 @@ class HypershellDistribution(D.Distribution):
     arg_constraints = {"radii": constraints.positive}
 
     def __init__(self, radii: torch.Tensor, dimensions: int = 2, noise: float = 0.1):
-        assert radii.dim() == 1
+        if not radii.dim() == 1:
+            raise ValueError("radii must be a 1D tensor")
         self.radii = radii
         super().__init__(batch_shape=(len(radii),), event_shape=(dimensions,))
 
